@@ -8,7 +8,7 @@ import { NETWORKS } from './assets/networks';
 import type { NetworkConfig } from './assets/networks';
 
 // Mainnet EulerSwap contract address
-const EULER_FACTORY = '0xb013be1D0D380C13B58e889f412895970A2Cf228';
+const EULER_FACTORY = '0xb013be1D0D380C13B58e889f412895970A2Cf228' as `0x${string}`;
 // Factory ABI (only necessary functions)
 const FACTORY_ABI = [
   {
@@ -114,6 +114,16 @@ const EXTENDED_FACTORY_ABI = [
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "stateMutability": "view",
     "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "start", "type": "uint256" },
+      { "internalType": "uint256", "name": "end", "type": "uint256" }
+    ],
+    "name": "poolsSlice",
+    "outputs": [{ "internalType": "address[]", "name": "", "type": "address[]" }],
+    "stateMutability": "view",
+    "type": "function"
   }
 ];
 
@@ -180,7 +190,7 @@ function App() {
   const [poolCount, setPoolCount] = useState<number | null>(null);
   const [poolAddresses, setPoolAddresses] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPool, setSelectedPool] = useState<string | null>(null);
+  const [selectedPool, setSelectedPool] = useState<`0x${string}` | null>(null);
   const [poolDetail, setPoolDetail] = useState<{
     asset0: string;
     asset1: string;
@@ -205,13 +215,13 @@ function App() {
   const swapSimAmountRef = useRef<HTMLInputElement>(null);
   const [networkKey, setNetworkKey] = useState('mainnet');
   const network: NetworkConfig = useMemo(() => NETWORKS.find(n => n.key === networkKey)!, [networkKey]);
-  const [factoryAddress, setFactoryAddress] = useState(network.factory);
+  const [factoryAddress, setFactoryAddress] = useState<`0x${string}`>(network.factory as `0x${string}`);
   const [client, setClient] = useState(() => createPublicClient({ chain: network.viemChain, transport: http() }));
   const [tokenList, setTokenList] = useState<TokenInfo[]>(TOKEN_LIST[networkKey] || []);
 
   // Update client, factory, tokenList on network change
   useEffect(() => {
-    setFactoryAddress(network.factory);
+    setFactoryAddress(network.factory as `0x${string}`);
     setClient(createPublicClient({ chain: network.viemChain, transport: http() }));
     setTokenList(TOKEN_LIST[networkKey] || []);
     setSelectedPool(null);
@@ -225,18 +235,25 @@ function App() {
       setLoading(true);
       try {
         const count = await client.readContract({
-          address: factoryAddress,
+          address: factoryAddress as `0x${string}`,
           abi: FACTORY_ABI,
           functionName: 'poolsLength',
         }) as bigint;
         setPoolCount(Number(count));
-        // Get pool address list
-        const pools = await client.readContract({
-          address: factoryAddress,
-          abi: FACTORY_ABI,
-          functionName: 'pools',
-        }) as string[];
-        setPoolAddresses(pools);
+        // Fetch all pool addresses in batches using poolsSlice
+        const batchSize = 100;
+        let allPools: string[] = [];
+        for (let i = 0; i < Number(count); i += batchSize) {
+          const end = Math.min(i + batchSize, Number(count));
+          const batch = await client.readContract({
+            address: factoryAddress as `0x${string}`,
+            abi: EXTENDED_FACTORY_ABI,
+            functionName: 'poolsSlice',
+            args: [BigInt(i), BigInt(end)],
+          }) as string[];
+          allPools = allPools.concat(batch);
+        }
+        setPoolAddresses(allPools);
       } catch (e) {
         setPoolCount(null);
         setPoolAddresses([]);
@@ -259,17 +276,17 @@ function App() {
       try {
         const [assets, params, reserves] = await Promise.all([
           client.readContract({
-            address: selectedPool,
+            address: selectedPool as `0x${string}`,
             abi: POOL_ABI,
             functionName: 'getAssets',
           }) as Promise<[string, string]>,
           client.readContract({
-            address: selectedPool,
+            address: selectedPool as `0x${string}`,
             abi: POOL_ABI,
             functionName: 'getParams',
           }) as Promise<PoolParams>,
           client.readContract({
-            address: selectedPool,
+            address: selectedPool as `0x${string}`,
             abi: POOL_ABI,
             functionName: 'getReserves',
           }) as Promise<[bigint, bigint, number]>,
@@ -295,8 +312,8 @@ function App() {
     const fetchFee = async () => {
       try {
         const [fee, recipient] = await Promise.all([
-          client.readContract({ address: factoryAddress, abi: EXTENDED_FACTORY_ABI, functionName: 'protocolFee' }) as Promise<bigint>,
-          client.readContract({ address: factoryAddress, abi: EXTENDED_FACTORY_ABI, functionName: 'protocolFeeRecipient' }) as Promise<string>,
+          client.readContract({ address: factoryAddress as `0x${string}`, abi: EXTENDED_FACTORY_ABI, functionName: 'protocolFee' }) as Promise<bigint>,
+          client.readContract({ address: factoryAddress as `0x${string}`, abi: EXTENDED_FACTORY_ABI, functionName: 'protocolFeeRecipient' }) as Promise<string>,
         ]);
         setProtocolFee((Number(fee) / 1e18).toString());
         setProtocolFeeRecipient(recipient);
@@ -314,7 +331,7 @@ function App() {
     setLoading(true);
     try {
       const filtered = await client.readContract({
-        address: factoryAddress,
+        address: factoryAddress as `0x${string}`,
         abi: EXTENDED_FACTORY_ABI,
         functionName: 'poolsByPair',
         args: [asset0Filter, asset1Filter],
@@ -333,7 +350,7 @@ function App() {
     setAccountPool(null);
     try {
       const pool = await client.readContract({
-        address: factoryAddress,
+        address: factoryAddress as `0x${string}`,
         abi: EXTENDED_FACTORY_ABI,
         functionName: 'poolByEulerAccount',
         args: [accountSearch],
@@ -354,7 +371,7 @@ function App() {
       const tokenOut = swapSim.direction === 'in' ? poolDetail.asset1 : poolDetail.asset0;
       const amount = BigInt(swapSim.amount);
       const quote = await client.readContract({
-        address: selectedPool,
+        address: selectedPool as `0x${string}`,
         abi: EXTENDED_POOL_ABI,
         functionName: 'computeQuote',
         args: [tokenIn, tokenOut, amount, swapSim.direction === 'in'],
@@ -371,7 +388,7 @@ function App() {
     const fetchLimits = async () => {
       try {
         const [maxIn, maxOut] = await client.readContract({
-          address: selectedPool,
+          address: selectedPool as `0x${string}`,
           abi: EXTENDED_POOL_ABI,
           functionName: 'getLimits',
           args: [poolDetail.asset0, poolDetail.asset1],
@@ -401,7 +418,7 @@ function App() {
     (async () => {
       try {
         const latestBlock = await client.getBlockNumber();
-        const fromBlock = `0x${Math.max(0, latestBlock - 5000).toString(16)}`;
+        const fromBlock = (latestBlock - 5000n > 0n ? latestBlock - 5000n : 0n);
         const logs = await client.getLogs({
           address: factoryAddress,
           fromBlock,
@@ -426,12 +443,12 @@ function App() {
     (async () => {
       try {
         const latestBlock = await client.getBlockNumber();
-        const fromBlock = `0x${Math.max(0, latestBlock - 5000).toString(16)}`;
+        const fromBlock = (latestBlock - 5000n > 0n ? latestBlock - 5000n : 0n);
         const logs = await client.getLogs({
-          address: selectedPool,
+          address: selectedPool!,
           fromBlock,
         });
-        if (!cancelled) setSwapHistory(logs.filter(l => l.eventName === 'Swap'));
+        if (!cancelled) setSwapHistory(logs);
       } catch {
         if (!cancelled) setSwapHistory([]);
       }
@@ -496,11 +513,84 @@ function App() {
     );
   }
 
+  // --- 新: プールアナライザー用の主要指標計算 ---
+  // トークン情報取得
+  const asset0Info = useMemo(() => tokenList.find(t => t.address.toLowerCase() === poolDetail?.asset0?.toLowerCase()), [poolDetail, tokenList]);
+  const asset1Info = useMemo(() => tokenList.find(t => t.address.toLowerCase() === poolDetail?.asset1?.toLowerCase()), [poolDetail, tokenList]);
+  // Fee（%）
+  const feePct = useMemo(() => poolDetail ? (Number(poolDetail.params.fee) / 1e6).toFixed(2) : '-', [poolDetail]);
+  // バランス比率
+  const balanceRatio = useMemo(() => poolDetail ? (Number(poolDetail.reserve0) / Number(poolDetail.reserve1)).toFixed(3) : '-', [poolDetail]);
+  // TVL（USD換算はAPI必要なので、ここではReserve合計を表示）
+  const tvl = useMemo(() => poolDetail ? (Number(poolDetail.reserve0) + Number(poolDetail.reserve1)).toLocaleString() : '-', [poolDetail]);
+  // スワップボリューム（直近20件合計）
+  const swapVolume = useMemo(() => swapHistory.reduce((sum, log) => sum + Number(log.args?.amount0In || 0) + Number(log.args?.amount1In || 0), 0), [swapHistory]);
+  // 価格推移データ
+  const priceHistory = useMemo(() => swapHistory.map(log => {
+    const a0 = Number(log.args?.amount0In || 0);
+    const a1 = Number(log.args?.amount1Out || 0);
+    return a0 > 0 && a1 > 0 ? a1 / a0 : null;
+  }).filter(v => v !== null), [swapHistory]);
+  // Fee APR（理論値: 年間ボリューム×fee/TVL）
+  const feeApr = useMemo(() => {
+    if (!poolDetail || !swapVolume) return '-';
+    const fee = Number(poolDetail.params.fee) / 1e6;
+    // 直近20件を1日分と仮定し年率換算
+    const annualVolume = swapVolume * 365;
+    const apr = tvl !== '-' && Number(tvl) > 0 ? (annualVolume * fee / Number(tvl) * 100).toFixed(2) : '-';
+    return apr;
+  }, [poolDetail, swapVolume, tvl]);
+
+  // --- 新: 主要指標カードUI ---
+  function PoolStatsCards() {
+    return (
+      <div style={{ display: 'flex', gap: 24, margin: '1.5em 0' }}>
+        <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 120, textAlign: 'center' }}>
+          <div style={{ fontSize: 13, color: '#888' }}>Fee</div>
+          <div style={{ fontSize: 22, fontWeight: 600 }}>{feePct}%</div>
+        </div>
+        <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 120, textAlign: 'center' }}>
+          <div style={{ fontSize: 13, color: '#888' }}>TVL (sum)</div>
+          <div style={{ fontSize: 22, fontWeight: 600 }}>{tvl}</div>
+        </div>
+        <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 120, textAlign: 'center' }}>
+          <div style={{ fontSize: 13, color: '#888' }}>Balance Ratio</div>
+          <div style={{ fontSize: 22, fontWeight: 600 }}>{balanceRatio}</div>
+        </div>
+        <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 120, textAlign: 'center' }}>
+          <div style={{ fontSize: 13, color: '#888' }}>Fee APR (est)</div>
+          <div style={{ fontSize: 22, fontWeight: 600 }}>{feeApr === '-' ? '-' : feeApr + '%'}</div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- 新: 価格推移グラフ ---
+  function PriceHistoryChart() {
+    if (!priceHistory.length) return null;
+    const width = 320, height = 80, pad = 20;
+    const maxY = Math.max(...priceHistory, 1);
+    return (
+      <svg width={width} height={height} style={{ background: '#f8f9fa', borderRadius: 8, marginTop: 8 }}>
+        <polyline
+          fill="none"
+          stroke="#4caf50"
+          strokeWidth="2"
+          points={priceHistory.map((y, i) => `${pad + (width - 2 * pad) * (i / Math.max(priceHistory.length - 1, 1))},${height - pad - (height - 2 * pad) * (y / maxY)}`).join(' ')}
+        />
+        <line x1={pad} y1={height - pad} x2={width - pad} y2={height - pad} stroke="#bbb" />
+        <line x1={pad} y1={pad} x2={pad} y2={height - pad} stroke="#bbb" />
+        <text x={pad} y={pad} fontSize="10" fill="#888">{maxY.toFixed(4)}</text>
+        <text x={pad} y={height - 4} fontSize="10" fill="#888">0</text>
+      </svg>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Sidebar */}
+      {/* Sidebar: Network switcher and pool list */}
       <aside style={{ width: 260, background: '#222', color: '#fff', padding: '2rem 1rem', minHeight: '100vh', textAlign: 'left' }}>
-        {/* Network switcher */}
+        {/* Network Switcher */}
         <div style={{ marginBottom: '1.5rem' }}>
           <label style={{ fontWeight: 'bold', marginBottom: 4, display: 'block' }}>Network</label>
           <select value={networkKey} onChange={e => setNetworkKey(e.target.value)} style={{ width: '100%' }}>
@@ -509,43 +599,7 @@ function App() {
             ))}
           </select>
         </div>
-        <h2>EulerSwap Dashboard</h2>
-        <div style={{ margin: '2rem 0' }}>
-          <div>Network: <b>{network.name}</b></div>
-          <div style={{ fontSize: '0.9em', marginTop: 8 }}>
-            Factory:<br />
-            <span style={{ wordBreak: 'break-all' }}>{factoryAddress}</span>
-          </div>
-        </div>
-        <hr style={{ border: '1px solid #444' }} />
-        <div style={{ marginTop: '2rem' }}>
-          <b>Filter by Asset Pair</b>
-          <div style={{ margin: '0.5em 0' }}>
-            <select value={asset0Symbol} onChange={e => setAsset0Symbol(e.target.value)} style={{ width: '100%' }}>
-              <option value="">Select Asset0</option>
-              {tokenList.map(t => (
-                <option key={t.address} value={t.symbol}>{t.symbol}</option>
-              ))}
-            </select>
-            <select value={asset1Symbol} onChange={e => setAsset1Symbol(e.target.value)} style={{ width: '100%', marginTop: 4 }}>
-              <option value="">Select Asset1</option>
-              {tokenList.map(t => (
-                <option key={t.address} value={t.symbol}>{t.symbol}</option>
-              ))}
-            </select>
-            <button style={{ width: '100%', marginTop: 4 }} onClick={handlePairFilter}>Filter</button>
-          </div>
-        </div>
-        <div style={{ marginTop: '2rem' }}>
-          <b>Search by Account</b>
-          <div style={{ margin: '0.5em 0' }}>
-            <input placeholder="Account address" value={accountSearch} onChange={e => setAccountSearch(e.target.value)} style={{ width: '100%' }} />
-            <button style={{ width: '100%', marginTop: 4 }} onClick={handleAccountSearch}>Search</button>
-            {accountPool && <div style={{ fontSize: '0.9em', marginTop: 4, wordBreak: 'break-all' }}>Pool: {accountPool}</div>}
-            {accountPoolError && <div style={{ color: 'red', fontSize: '0.9em', marginTop: 4 }}>{accountPoolError}</div>}
-          </div>
-        </div>
-        <hr style={{ border: '1px solid #444', margin: '2rem 0' }} />
+        <h2>Pool Analyzer</h2>
         <div style={{ marginTop: '2rem' }}>
           <b>Pool List</b>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
@@ -555,7 +609,7 @@ function App() {
                   <li
                     key={addr}
                     style={{ fontSize: '0.9em', margin: '0.5em 0', wordBreak: 'break-all', cursor: 'pointer', color: selectedPool === addr ? '#61dafb' : undefined }}
-                    onClick={() => setSelectedPool(addr)}
+                    onClick={() => setSelectedPool(addr as `0x${string}`)}
                   >
                     {addr}
                   </li>
@@ -563,123 +617,61 @@ function App() {
           </ul>
         </div>
       </aside>
-      {/* Main */}
+      {/* Main: Global summary + pool analyzer */}
       <main style={{ flex: 1, background: '#f5f6fa', padding: '2rem' }}>
-        <h1>EulerSwap Pool Summary</h1>
-        {loading ? <p>Loading...</p> :
-          <>
-            <p>Total pools: <b>{poolCount ?? 'Failed to fetch'}</b></p>
-            <div style={{ margin: '1em 0' }}>
-              <b>Protocol Fee:</b> {protocolFee ?? '...'}<br />
-              <b>Protocol Fee Recipient:</b> {protocolFeeRecipient ?? '...'}
+        {/* Global summary */}
+        <section style={{ marginBottom: '2rem', background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #0001', padding: '1.5rem', maxWidth: 800 }}>
+          <h2 style={{ marginBottom: 8 }}>EulerSwap Summary</h2>
+          <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div><b>Network:</b> {network.name}</div>
+            <div><b>Total Pools:</b> {poolCount ?? '...'}</div>
+            <div><b>Protocol Fee:</b> {protocolFee ?? '...'}</div>
+            <div><b>Protocol Fee Recipient:</b> <span style={{ fontSize: '0.95em', wordBreak: 'break-all' }}>{protocolFeeRecipient ?? '...'}</span></div>
+            <div><b>Factory:</b> <span style={{ fontSize: '0.95em', wordBreak: 'break-all' }}>{factoryAddress}</span></div>
+          </div>
+        </section>
+        {/* Pool analyzer */}
+        {selectedPool && poolDetail && (
+          <section style={{ marginTop: '2rem', textAlign: 'left', background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #0001', padding: '2rem', maxWidth: 800 }}>
+            <h2 style={{ marginBottom: 8 }}>Pool Analyzer</h2>
+            <div style={{ fontSize: '1.1em', marginBottom: 8 }}>
+              <b>{asset0Info?.symbol || poolDetail.asset0}</b> / <b>{asset1Info?.symbol || poolDetail.asset1}</b>
+              <span style={{ color: '#888', fontSize: '0.9em', marginLeft: 8 }}>{selectedPool}</span>
             </div>
-            {selectedPool && (
-              <section style={{ marginTop: '2rem', textAlign: 'left', background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #0001', padding: '2rem', maxWidth: 800 }}>
-                <h2>Pool Details</h2>
-                <div style={{ fontSize: '0.95em', marginBottom: 12 }}>
-                  <b>Address:</b> <span style={{ wordBreak: 'break-all' }}>{selectedPool}</span>
-                </div>
-                {poolDetailLoading && <p>Loading pool details...</p>}
-                {poolDetailError && <p style={{ color: 'red' }}>{poolDetailError}</p>}
-                {poolDetail && (
-                  <>
-                    <div><b>Asset0:</b> {poolDetail.asset0}</div>
-                    <div><b>Asset1:</b> {poolDetail.asset1}</div>
-                    <div style={{ marginTop: 10 }}><b>Reserves:</b></div>
-                    <div style={{ marginLeft: 16 }}>Asset0: {poolDetail.reserve0.toString()}</div>
-                    <div style={{ marginLeft: 16 }}>Asset1: {poolDetail.reserve1.toString()}</div>
-                    <div style={{ marginLeft: 16 }}>Status: {poolDetail.status}</div>
-                    <div style={{ marginTop: 10 }}><b>Params:</b></div>
-                    <div style={{ marginLeft: 16 }}>Vault0: {poolDetail.params.vault0}</div>
-                    <div style={{ marginLeft: 16 }}>Vault1: {poolDetail.params.vault1}</div>
-                    <div style={{ marginLeft: 16 }}>EulerAccount: {poolDetail.params.eulerAccount}</div>
-                    <div style={{ marginLeft: 16 }}>EquilibriumReserve0: {poolDetail.params.equilibriumReserve0.toString()}</div>
-                    <div style={{ marginLeft: 16 }}>EquilibriumReserve1: {poolDetail.params.equilibriumReserve1.toString()}</div>
-                    <div style={{ marginLeft: 16 }}>PriceX: {poolDetail.params.priceX.toString()}</div>
-                    <div style={{ marginLeft: 16 }}>PriceY: {poolDetail.params.priceY.toString()}</div>
-                    <div style={{ marginLeft: 16 }}>ConcentrationX: {poolDetail.params.concentrationX.toString()}</div>
-                    <div style={{ marginLeft: 16 }}>ConcentrationY: {poolDetail.params.concentrationY.toString()}</div>
-                    <div style={{ marginLeft: 16 }}>Fee: {poolDetail.params.fee.toString()}</div>
-                    <div style={{ marginLeft: 16 }}>ProtocolFee: {poolDetail.params.protocolFee.toString()}</div>
-                    <div style={{ marginLeft: 16 }}>ProtocolFeeRecipient: {poolDetail.params.protocolFeeRecipient}</div>
-                  </>
-                )}
-                {/* Swap Simulator */}
-                {poolDetail && (
-                  <div style={{ marginTop: 24, padding: 16, background: '#f8f9fa', borderRadius: 8 }}>
-                    <h3>Swap Simulator</h3>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <select value={swapSim.direction} onChange={e => setSwapSim(s => ({ ...s, direction: e.target.value as 'in' | 'out', result: null, error: null }))}>
-                        <option value="in">Input → Output</option>
-                        <option value="out">Output → Input</option>
-                      </select>
-                      <input ref={swapSimAmountRef} type="number" min="0" placeholder="Amount" value={swapSim.amount} onChange={e => setSwapSim(s => ({ ...s, amount: e.target.value, result: null, error: null }))} style={{ width: 120 }} />
-                      <button onClick={handleSwapSim}>Quote</button>
-                    </div>
-                    {swapSim.limits && (
-                      <div style={{ fontSize: '0.9em', marginTop: 4 }}>
-                        Max Input: {swapSim.limits.maxIn}<br />
-                        Max Output: {swapSim.limits.maxOut}
-                      </div>
-                    )}
-                    {swapSim.result && <div style={{ marginTop: 8 }}>Quote Result: <b>{swapSim.result}</b></div>}
-                    {swapSim.error && <div style={{ color: 'red', marginTop: 8 }}>{swapSim.error}</div>}
-                  </div>
-                )}
-                {/* Swap History */}
-                <div style={{ marginTop: 24 }}>
-                  <h3>Swap History</h3>
-                  {swapHistoryLoading ? <div>Loading swap history...</div> :
-                    swapHistory.length === 0 ? <div>No swaps found.</div> :
-                      <>
-                        <table style={{ width: '100%', fontSize: '0.95em', marginBottom: 8 }}>
-                          <thead>
-                            <tr>
-                              <th>Sender</th>
-                              <th>Amount0In</th>
-                              <th>Amount1In</th>
-                              <th>Amount0Out</th>
-                              <th>Amount1Out</th>
-                              <th>Reserve0</th>
-                              <th>Reserve1</th>
-                              <th>To</th>
-                              <th>Block</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {swapHistory.slice(-20).reverse().map(renderSwapRow)}
-                          </tbody>
-                        </table>
-                        <SwapHistoryChart data={swapHistory} />
-                      </>
-                  }
-                </div>
-              </section>
-            )}
-            {/* Recent Events */}
-            <section style={{ marginTop: '2rem', background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #0001', padding: '2rem', maxWidth: 800 }}>
-              <h2>Recent Events</h2>
-              {eventLoading ? <div>Loading events...</div> :
-                eventError ? <div style={{ color: 'red' }}>{eventError}</div> :
-                  recentEvents.length === 0 ? <div>No events found.</div> :
-                    <table style={{ width: '100%', fontSize: '0.95em' }}>
-                      <thead>
-                        <tr>
-                          <th>Event</th>
-                          <th>Block</th>
-                          <th>Args/Data</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {recentEvents.slice(-20).reverse().map(renderEventRow)}
-                      </tbody>
-                    </table>
-              }
-            </section>
-          </>
-        }
+            <PoolStatsCards />
+            <div style={{ margin: '1.5em 0 0.5em 0' }}>
+              <b>Swap Volume (last 20):</b> {swapVolume.toLocaleString()}
+            </div>
+            <div style={{ margin: '1em 0' }}>
+              <b>Price History</b>
+              <PriceHistoryChart />
+            </div>
+            <div style={{ margin: '1em 0' }}>
+              <b>Swap History (last 20)</b>
+              <table style={{ width: '100%', fontSize: '0.95em', marginBottom: 8 }}>
+                <thead>
+                  <tr>
+                    <th>Sender</th>
+                    <th>Amount0In</th>
+                    <th>Amount1In</th>
+                    <th>Amount0Out</th>
+                    <th>Amount1Out</th>
+                    <th>Reserve0</th>
+                    <th>Reserve1</th>
+                    <th>To</th>
+                    <th>Block</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {swapHistory.slice(-20).reverse().map(renderSwapRow)}
+                </tbody>
+              </table>
+      </div>
+          </section>
+        )}
+        {!selectedPool && <div style={{ marginTop: 80, color: '#888', fontSize: '1.2em' }}>Please select a pool</div>}
       </main>
-    </div>
+      </div>
   );
 }
 
