@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import './App.css';
 import { createPublicClient, http } from 'viem';
 import { mainnet } from 'viem/chains';
@@ -218,6 +218,67 @@ function App() {
   const [factoryAddress, setFactoryAddress] = useState<`0x${string}`>(network.factory as `0x${string}`);
   const [client, setClient] = useState(() => createPublicClient({ chain: network.viemChain, transport: http() }));
   const [tokenList, setTokenList] = useState<TokenInfo[]>(TOKEN_LIST[networkKey] || []);
+  const [swapHistoryWithTimestamp, setSwapHistoryWithTimestamp] = useState<any[]>([]);
+
+  // --- Fee & Volume Metrics Calculation (contract-accurate, English) ---
+  const [dailyMetrics, setDailyMetrics] = useState<any[]>([]);
+  const [cumulativeMetrics, setCumulativeMetrics] = useState<any>({});
+
+  useEffect(() => {
+    if (!swapHistoryWithTimestamp.length || !poolDetail) {
+      setDailyMetrics([]);
+      setCumulativeMetrics({});
+      return;
+    }
+    // Get fee and protocolFee from pool params
+    const fee = Number(poolDetail.params.fee) / 1e18; // e.g. 0.001
+    const protocolFeeRate = Number(poolDetail.params.protocolFee) / 1e18; // e.g. 0.1
+
+    // Group by day (UTC)
+    const dayMap: Record<string, any> = {};
+    let cumulative = {
+      protocolFee: 0,
+      lpFee: 0,
+      totalFee: 0,
+      tradingVolume: 0,
+      swapCount: 0,
+    };
+
+    for (const log of swapHistoryWithTimestamp) {
+      const netIn = Number(log.args?.amount0In || 0) + Number(log.args?.amount1In || 0);
+      if (netIn === 0) continue;
+      const grossIn = netIn / (1 - fee);
+      const totalFee = grossIn - netIn;
+      const protocolFee = totalFee * protocolFeeRate;
+      const lpFee = totalFee - protocolFee;
+      const ts = log.timestamp ? new Date(log.timestamp * 1000) : null;
+      const day = ts ? ts.toISOString().slice(0, 10) : 'unknown';
+      if (!dayMap[day]) {
+        dayMap[day] = {
+          protocolFee: 0,
+          lpFee: 0,
+          totalFee: 0,
+          tradingVolume: 0,
+          swapCount: 0,
+          day,
+        };
+      }
+      dayMap[day].protocolFee += protocolFee;
+      dayMap[day].lpFee += lpFee;
+      dayMap[day].totalFee += totalFee;
+      dayMap[day].tradingVolume += grossIn;
+      dayMap[day].swapCount += 1;
+      cumulative.protocolFee += protocolFee;
+      cumulative.lpFee += lpFee;
+      cumulative.totalFee += totalFee;
+      cumulative.tradingVolume += grossIn;
+      cumulative.swapCount += 1;
+    }
+    // Convert to sorted array
+    const dailyArr = Object.values(dayMap).sort((a: any, b: any) => a.day.localeCompare(b.day));
+    setDailyMetrics(dailyArr);
+    setCumulativeMetrics(cumulative);
+  }, [swapHistoryWithTimestamp, poolDetail]);
 
   // Update client, factory, tokenList on network change
   useEffect(() => {
@@ -457,6 +518,32 @@ function App() {
     return () => { cancelled = true; };
   }, [client, selectedPool]);
 
+  // swapHistory取得後、blockNumberからtimestampを取得して付与
+  useEffect(() => {
+    if (!swapHistory.length || !client) {
+      setSwapHistoryWithTimestamp([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      // blockNumberの重複を避けて一括取得
+      const blockNumbers = Array.from(new Set(swapHistory.map(log => log.blockNumber)));
+      const blockMap: Record<string, number> = {};
+      await Promise.all(blockNumbers.map(async (bn) => {
+        try {
+          const block = await client.getBlock({ blockNumber: BigInt(bn) });
+          blockMap[bn] = Number(block.timestamp);
+        } catch {
+          blockMap[bn] = 0;
+        }
+      }));
+      if (cancelled) return;
+      // 各logにtimestampを付与
+      setSwapHistoryWithTimestamp(swapHistory.map(log => ({ ...log, timestamp: blockMap[log.blockNumber] })));
+    })();
+    return () => { cancelled = true; };
+  }, [swapHistory, client]);
+
   // Helper: decode event args (viem log format)
   function renderEventRow(log: any, i: number) {
     return (
@@ -639,6 +726,91 @@ function App() {
               <span style={{ color: '#888', fontSize: '0.9em', marginLeft: 8 }}>{selectedPool}</span>
             </div>
             <PoolStatsCards />
+
+            {/* --- New: Fee & Volume Metrics Cards --- */}
+            <div style={{ display: 'flex', gap: 24, margin: '1.5em 0', flexWrap: 'wrap' }}>
+              <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 160, textAlign: 'center' }}>
+                <div style={{ fontSize: 13, color: '#888' }}>Cumulative Protocol Fees</div>
+                <div style={{ fontSize: 22, fontWeight: 600 }}>{cumulativeMetrics.protocolFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '-'}</div>
+              </div>
+              <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 160, textAlign: 'center' }}>
+                <div style={{ fontSize: 13, color: '#888' }}>Cumulative LP Fees</div>
+                <div style={{ fontSize: 22, fontWeight: 600 }}>{cumulativeMetrics.lpFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '-'}</div>
+              </div>
+              <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 160, textAlign: 'center' }}>
+                <div style={{ fontSize: 13, color: '#888' }}>Cumulative Total Fees</div>
+                <div style={{ fontSize: 22, fontWeight: 600 }}>{cumulativeMetrics.totalFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '-'}</div>
+              </div>
+              <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 160, textAlign: 'center' }}>
+                <div style={{ fontSize: 13, color: '#888' }}>Cumulative Trading Volume</div>
+                <div style={{ fontSize: 22, fontWeight: 600 }}>{cumulativeMetrics.tradingVolume?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '-'}</div>
+              </div>
+            </div>
+
+            {/* --- New: Daily Metrics Table --- */}
+            <div style={{ margin: '2em 0 1em 0' }}>
+              <b>Daily Fee & Volume Metrics</b>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', fontSize: '0.95em', marginTop: 8, background: '#f8f9fa', borderRadius: 8 }}>
+                  <thead>
+                    <tr>
+                      <th>Date (UTC)</th>
+                      <th>Protocol Fees</th>
+                      <th>LP Fees</th>
+                      <th>Total Fees</th>
+                      <th>Trading Volume</th>
+                      <th>Swap Count</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dailyMetrics.map((row: any) => (
+                      <tr key={row.day}>
+                        <td>{row.day}</td>
+                        <td>{row.protocolFee.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+                        <td>{row.lpFee.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+                        <td>{row.totalFee.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+                        <td>{row.tradingVolume.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+                        <td>{row.swapCount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* --- New: Daily Trends Line Chart (Total Fees & Volume) --- */}
+            <div style={{ margin: '2em 0 1em 0' }}>
+              <b>Daily Trends</b>
+              <svg width={600} height={180} style={{ background: '#f8f9fa', borderRadius: 8, marginTop: 8 }}>
+                {/* X axis labels */}
+                {dailyMetrics.map((row: any, i: number) => (
+                  <text key={row.day} x={60 + i * 40} y={170} fontSize="10" fill="#888" textAnchor="middle">{row.day.slice(5)}</text>
+                ))}
+                {/* Y axis (left) */}
+                <text x={10} y={30} fontSize="10" fill="#888">Fees</text>
+                {/* Y axis (right) */}
+                <text x={580} y={30} fontSize="10" fill="#888">Volume</text>
+                {/* Total Fees line */}
+                <polyline
+                  fill="none"
+                  stroke="#ff9800"
+                  strokeWidth="2"
+                  points={dailyMetrics.map((row: any, i: number) => `${60 + i * 40},${160 - (row.totalFee / Math.max(...dailyMetrics.map((r: any) => r.totalFee), 1)) * 120}`).join(' ')}
+                />
+                {/* Trading Volume line */}
+                <polyline
+                  fill="none"
+                  stroke="#2196f3"
+                  strokeWidth="2"
+                  points={dailyMetrics.map((row: any, i: number) => `${60 + i * 40},${160 - (row.tradingVolume / Math.max(...dailyMetrics.map((r: any) => r.tradingVolume), 1)) * 120}`).join(' ')}
+                />
+              </svg>
+              <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>
+                <span style={{ color: '#ff9800' }}>■</span> Total Fees &nbsp; <span style={{ color: '#2196f3' }}>■</span> Trading Volume
+              </div>
+            </div>
+
+            {/* Existing swap volume, price history, and swap history table remain below */}
             <div style={{ margin: '1.5em 0 0.5em 0' }}>
               <b>Swap Volume (last 20):</b> {swapVolume.toLocaleString()}
             </div>
@@ -666,12 +838,12 @@ function App() {
                   {swapHistory.slice(-20).reverse().map(renderSwapRow)}
                 </tbody>
               </table>
-      </div>
+            </div>
           </section>
         )}
         {!selectedPool && <div style={{ marginTop: 80, color: '#888', fontSize: '1.2em' }}>Please select a pool</div>}
       </main>
-      </div>
+    </div>
   );
 }
 
