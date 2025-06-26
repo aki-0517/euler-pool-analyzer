@@ -6,6 +6,9 @@ export type NetworkConfig = {
   chainId: number;
   viemChain: any;
   factory: string;
+  rpc?: string;
+  explorer?: string;
+  nativeCurrency?: { name: string; symbol: string; decimals: number };
 };
 
 export const NETWORKS: NetworkConfig[] = [
@@ -50,6 +53,22 @@ export const NETWORKS: NetworkConfig[] = [
       blockExplorers: { default: { name: 'Unichain Explorer', url: 'https://uniscan.xyz' } }
     },
     factory: '0x45b146BC07c9985589B52df651310e75C6BE066A',
+  },
+  {
+    key: 'devland',
+    name: 'Devland (Local)',
+    chainId: 31337,
+    viemChain: {
+      id: 31337,
+      name: 'Devland',
+      network: 'devland',
+      nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+      rpcUrls: { default: { http: ['http://localhost:8545'] } },
+    },
+    factory: '0x11dE489De683DbBe8e1483700656F54280224531',
+    rpc: 'http://localhost:8545',
+    explorer: '',
+    nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
   },
   // Add more networks as needed
 ]; 
