@@ -1,7 +1,6 @@
-import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import './App.css';
 import { createPublicClient, http } from 'viem';
-import { mainnet } from 'viem/chains';
 import { TOKEN_LIST } from './assets/tokenlist';
 import type { TokenInfo } from './assets/tokenlist';
 import { NETWORKS } from './assets/networks';
@@ -180,19 +179,7 @@ const EXTENDED_POOL_ABI = [
   }
 ];
 
-// Event topics for logs
-const EVENT_TOPICS = {
-  PoolDeployed: '0x7e2e7e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e', // placeholder, replace with actual
-  PoolUninstalled: '0x...', // placeholder
-  ProtocolFeeSet: '0x...', // placeholder
-  ProtocolFeeRecipientSet: '0x...', // placeholder
-  Swap: '0x...', // placeholder
-};
 
-const client = createPublicClient({
-  chain: mainnet,
-  transport: http()
-});
 
 type PoolParams = {
   vault0: string;
@@ -222,20 +209,9 @@ function App() {
     reserve1: bigint;
     status: number;
   } | null>(null);
-  const [poolDetailLoading, setPoolDetailLoading] = useState(false);
-  const [poolDetailError, setPoolDetailError] = useState<string | null>(null);
-  const [asset0Filter, setAsset0Filter] = useState('');
-  const [asset1Filter, setAsset1Filter] = useState('');
-  const [accountSearch, setAccountSearch] = useState('');
-  const [accountPool, setAccountPool] = useState<string | null>(null);
-  const [accountPoolError, setAccountPoolError] = useState<string | null>(null);
   const [protocolFee, setProtocolFee] = useState<string | null>(null);
   const [protocolFeeRecipient, setProtocolFeeRecipient] = useState<string | null>(null);
-  const [swapSim, setSwapSim] = useState<{ direction: 'in' | 'out'; amount: string; result: string | null; error: string | null; limits: { maxIn: string; maxOut: string } | null }>({ direction: 'in', amount: '', result: null, error: null, limits: null });
   const [swapHistory, setSwapHistory] = useState<any[]>([]);
-  const [swapHistoryLoading, setSwapHistoryLoading] = useState(false);
-  const [events, setEvents] = useState<any[]>([]);
-  const swapSimAmountRef = useRef<HTMLInputElement>(null);
   const [networkKey, setNetworkKey] = useState('mainnet');
   const network: NetworkConfig = useMemo(() => NETWORKS.find(n => n.key === networkKey)!, [networkKey]);
   const [factoryAddress, setFactoryAddress] = useState<`0x${string}`>(network.factory as `0x${string}`);
@@ -353,12 +329,9 @@ function App() {
   useEffect(() => {
     if (!selectedPool) {
       setPoolDetail(null);
-      setPoolDetailError(null);
       setVaultAvailable({ available0: null, available1: null });
       return;
     }
-    setPoolDetailLoading(true);
-    setPoolDetailError(null);
     setPoolDetail(null);
     const fetchDetail = async () => {
       try {
@@ -421,10 +394,8 @@ function App() {
           available1: avail1.toString(),
         });
       } catch (e) {
-        setPoolDetailError('Failed to fetch pool details.');
         setVaultAvailable({ available0: null, available1: null });
       }
-      setPoolDetailLoading(false);
     };
     fetchDetail();
   }, [selectedPool]);
@@ -447,121 +418,14 @@ function App() {
     fetchFee();
   }, [client, factoryAddress]);
 
-  // Pool filter by asset pair
-  const handlePairFilter = async () => {
-    if (!asset0Filter || !asset1Filter) return;
-    setLoading(true);
-    try {
-      const filtered = await client.readContract({
-        address: factoryAddress as `0x${string}`,
-        abi: EXTENDED_FACTORY_ABI,
-        functionName: 'poolsByPair',
-        args: [asset0Filter, asset1Filter],
-      }) as string[];
-      setPoolAddresses(filtered);
-    } catch {
-      setPoolAddresses([]);
-    }
-    setLoading(false);
-  };
 
-  // Account search
-  const handleAccountSearch = async () => {
-    if (!accountSearch) return;
-    setAccountPoolError(null);
-    setAccountPool(null);
-    try {
-      const pool = await client.readContract({
-        address: factoryAddress as `0x${string}`,
-        abi: EXTENDED_FACTORY_ABI,
-        functionName: 'poolByEulerAccount',
-        args: [accountSearch],
-      }) as string;
-      setAccountPool(pool && pool !== '0x0000000000000000000000000000000000000000' ? pool : null);
-      if (!pool || pool === '0x0000000000000000000000000000000000000000') setAccountPoolError('No pool found for this account.');
-    } catch {
-      setAccountPoolError('Failed to fetch pool for this account.');
-    }
-  };
 
-  // Swap simulator
-  const handleSwapSim = async () => {
-    if (!selectedPool || !poolDetail) return;
-    setSwapSim(s => ({ ...s, result: null, error: null }));
-    try {
-      const tokenIn = swapSim.direction === 'in' ? poolDetail.asset0 : poolDetail.asset1;
-      const tokenOut = swapSim.direction === 'in' ? poolDetail.asset1 : poolDetail.asset0;
-      const amount = BigInt(swapSim.amount);
-      const quote = await client.readContract({
-        address: selectedPool as `0x${string}`,
-        abi: EXTENDED_POOL_ABI,
-        functionName: 'computeQuote',
-        args: [tokenIn, tokenOut, amount, swapSim.direction === 'in'],
-      }) as bigint;
-      setSwapSim(s => ({ ...s, result: quote.toString() }));
-    } catch (e: any) {
-      setSwapSim(s => ({ ...s, result: null, error: 'Failed to get quote.' }));
-    }
-  };
 
-  // Fetch swap limits for simulator
-  useEffect(() => {
-    if (!selectedPool || !poolDetail) return;
-    const fetchLimits = async () => {
-      try {
-        const [maxIn, maxOut] = await client.readContract({
-          address: selectedPool as `0x${string}`,
-          abi: EXTENDED_POOL_ABI,
-          functionName: 'getLimits',
-          args: [poolDetail.asset0, poolDetail.asset1],
-        }) as [bigint, bigint];
-        setSwapSim(s => ({ ...s, limits: { maxIn: maxIn.toString(), maxOut: maxOut.toString() } }));
-      } catch {
-        setSwapSim(s => ({ ...s, limits: null }));
-      }
-    };
-    fetchLimits();
-  }, [selectedPool, poolDetail]);
-
-  // Asset pair filter using token symbols
-  const [asset0Symbol, setAsset0Symbol] = useState('');
-  const [asset1Symbol, setAsset1Symbol] = useState('');
-  const asset0Addr = useMemo(() => tokenList.find(t => t.symbol === asset0Symbol)?.address || '', [asset0Symbol, tokenList]);
-  const asset1Addr = useMemo(() => tokenList.find(t => t.symbol === asset1Symbol)?.address || '', [asset1Symbol, tokenList]);
-
-  // Event log fetching
-  const [eventLoading, setEventLoading] = useState(false);
-  const [eventError, setEventError] = useState<string | null>(null);
-  const [recentEvents, setRecentEvents] = useState<any[]>([]);
-  useEffect(() => {
-    let cancelled = false;
-    setEventLoading(true);
-    setEventError(null);
-    (async () => {
-      try {
-        const latestBlock = await client.getBlockNumber();
-        const fromBlock = (latestBlock - 5000n > 0n ? latestBlock - 5000n : 0n);
-        const logs = await client.getLogs({
-          address: factoryAddress,
-          fromBlock,
-        });
-        if (!cancelled) setRecentEvents(logs);
-      } catch (e) {
-        if (!cancelled) {
-          setEventError('Failed to fetch events');
-          setRecentEvents([]);
-        }
-      }
-      if (!cancelled) setEventLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, [client, factoryAddress]);
 
   // Swap history for selected pool
   useEffect(() => {
     if (!selectedPool) return;
     let cancelled = false;
-    setSwapHistoryLoading(true);
     (async () => {
       try {
         const latestBlock = await client.getBlockNumber();
@@ -574,7 +438,6 @@ function App() {
       } catch {
         if (!cancelled) setSwapHistory([]);
       }
-      if (!cancelled) setSwapHistoryLoading(false);
     })();
     return () => { cancelled = true; };
   }, [client, selectedPool]);
@@ -605,16 +468,6 @@ function App() {
     return () => { cancelled = true; };
   }, [swapHistory, client]);
 
-  // Helper: decode event args (viem log format)
-  function renderEventRow(log: any, i: number) {
-    return (
-      <tr key={i}>
-        <td>{log.eventName || log.topics?.[0]?.slice(0, 10) || 'Unknown'}</td>
-        <td>{log.blockNumber}</td>
-        <td style={{ fontSize: '0.85em', wordBreak: 'break-all' }}>{JSON.stringify(log.args || log.data)}</td>
-      </tr>
-    );
-  }
 
   // Helper: decode swap event args
   function renderSwapRow(log: any, i: number) {
@@ -808,7 +661,7 @@ function App() {
             } />
             <Route path="/swap" element={<Swap networkKey={networkKey} />} />
             <Route path="/create-pool" element={<CreatePool networkKey={networkKey} />} />
-            <Route path="/deposit-pool" element={<DepositPool networkKey={networkKey} />} />
+            <Route path="/deposit-pool" element={<DepositPool />} />
           </Routes>
         </main>
       </div>

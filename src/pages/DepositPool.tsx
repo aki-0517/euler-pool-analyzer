@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
-import { TOKEN_LIST } from '../assets/tokenlist';
-import { NETWORKS } from '../assets/networks';
+import { useState } from 'react';
 import * as LibEulerSwap from '../lib/LibEulerSwap';
 
-export default function DepositPool({ networkKey }: { networkKey: string }) {
+export default function DepositPool() {
   const [tab, setTab] = useState<'deposit'|'curve'|'address'|'price'|'math'>('deposit');
   // Common parameters
   const [poolAddr, setPoolAddr] = useState('');
@@ -19,7 +17,6 @@ export default function DepositPool({ networkKey }: { networkKey: string }) {
   const [priceFrac, setPriceFrac] = useState<[any,any]>();
   const [fVal, setFVal] = useState<string>('');
   const [fInvVal, setFInvVal] = useState<string>('');
-  const tokenList = TOKEN_LIST[networkKey] || [];
 
   // Temporary: Get pool parameters (originally from on-chain getParams)
   const params = {

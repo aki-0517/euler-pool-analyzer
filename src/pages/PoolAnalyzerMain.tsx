@@ -1,4 +1,3 @@
-import React from 'react';
 
 // 必要なprops型（App.tsxから渡すものを列挙）
 interface PoolAnalyzerMainProps {
@@ -10,25 +9,25 @@ interface PoolAnalyzerMainProps {
   loading: boolean;
   poolAddresses: string[];
   selectedPool: string | null;
-  setSelectedPool: React.Dispatch<React.SetStateAction<`0x${string}` | null>>;
+  setSelectedPool: (value: `0x${string}` | null) => void;
   poolDetail: any;
   asset0Info: any;
   asset1Info: any;
   cumulativeMetrics: any;
   dailyMetrics: any[];
   swapVolume: number;
-  PriceHistoryChart: React.FC;
+  PriceHistoryChart: () => JSX.Element | null;
   swapHistory: any[];
-  renderSwapRow: (row: any) => React.ReactNode;
-  PoolStatsCards: React.FC;
+  renderSwapRow: (row: any) => JSX.Element;
+  PoolStatsCards: () => JSX.Element;
 }
 
-const PoolAnalyzerMain: React.FC<PoolAnalyzerMainProps> = ({
+const PoolAnalyzerMain = ({
   network, poolCount, protocolFee, protocolFeeRecipient, factoryAddress,
   loading, poolAddresses, selectedPool, setSelectedPool, poolDetail,
   asset0Info, asset1Info, cumulativeMetrics, dailyMetrics, swapVolume,
   PriceHistoryChart, swapHistory, renderSwapRow, PoolStatsCards
-}) => {
+}: PoolAnalyzerMainProps) => {
   return (
     <>
       {/* Global summary */}
