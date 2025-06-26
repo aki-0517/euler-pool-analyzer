@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { TOKEN_LIST } from '../assets/tokenlist';
 import { NETWORKS } from '../assets/networks';
 import { createPublicClient, http } from 'viem';
@@ -78,10 +78,8 @@ export default function Swap({ networkKey }: { networkKey: string }) {
   const [slippage, setSlippage] = useState('0.5');
   const [account, setAccount] = useState('');
   const [poolAddresses, setPoolAddresses] = useState<string[]>([]);
-  const [poolDetails, setPoolDetails] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [priceMap, setPriceMap] = useState<any>({});
-  const [priceLoading, setPriceLoading] = useState(false);
   const [lensPools, setLensPools] = useState<any[]>([]);
   const [lensQuotes, setLensQuotes] = useState<any[]>([]);
   const [lensLoading, setLensLoading] = useState(false);
@@ -119,96 +117,12 @@ export default function Swap({ networkKey }: { networkKey: string }) {
 
   // --- 価格API取得 ---
   useEffect(() => {
-    setPriceLoading(true);
     fetch('https://app.euler.finance/api/v1/price?chainId=1')
       .then(res => res.json())
       .then(data => setPriceMap(data))
-      .catch(() => setPriceMap({}))
-      .finally(() => setPriceLoading(false));
+      .catch(() => setPriceMap({}));
   }, []);
 
-  // 各プール詳細取得
-  useEffect(() => {
-    if (!poolAddresses.length) {
-      setPoolDetails([]);
-      return;
-    }
-    setLoading(true);
-    (async () => {
-      const details = await Promise.all(poolAddresses.map(async (addr) => {
-        try {
-          const [params, reserves] = await Promise.all([
-            client.readContract({ address: addr as `0x${string}`, abi: POOL_ABI, functionName: 'getParams' }) as Promise<any>,
-            client.readContract({ address: addr as `0x${string}`, abi: POOL_ABI, functionName: 'getReserves' }) as Promise<[bigint, bigint, number]>,
-          ]);
-          // Vault Available
-          let available0 = null, available1 = null;
-          if (account) {
-            try {
-              const [shares0, shares1] = await Promise.all([
-                client.readContract({ address: params.vault0 as `0x${string}`, abi: VAULT_ABI, functionName: 'balanceOf', args: [account] }) as Promise<bigint>,
-                client.readContract({ address: params.vault1 as `0x${string}`, abi: VAULT_ABI, functionName: 'balanceOf', args: [account] }) as Promise<bigint>,
-              ]);
-              const [avail0, avail1] = await Promise.all([
-                client.readContract({ address: params.vault0 as `0x${string}`, abi: VAULT_ABI, functionName: 'convertToAssets', args: [shares0] }) as Promise<bigint>,
-                client.readContract({ address: params.vault1 as `0x${string}`, abi: VAULT_ABI, functionName: 'convertToAssets', args: [shares1] }) as Promise<bigint>,
-              ]);
-              available0 = avail0.toString();
-              available1 = avail1.toString();
-            } catch {}
-          }
-          // Price（priceX/priceY）
-          const price = params.priceX && params.priceY ? (Number(params.priceX) / Number(params.priceY)).toPrecision(8) : '-';
-          // Quote
-          let quote = null;
-          if (amountIn) {
-            try {
-              quote = await client.readContract({
-                address: addr as `0x${string}`,
-                abi: POOL_ABI,
-                functionName: 'computeQuote',
-                args: [fromAddr, toAddr, BigInt(amountIn), true],
-              }) as bigint;
-              quote = quote.toString();
-            } catch {}
-          }
-          // シンボル・USD価格
-          const token0 = tokenList.find(t => t.address.toLowerCase() === params.asset0?.toLowerCase() || t.address.toLowerCase() === params.vault0?.toLowerCase());
-          const token1 = tokenList.find(t => t.address.toLowerCase() === params.asset1?.toLowerCase() || t.address.toLowerCase() === params.vault1?.toLowerCase());
-          const symbol0 = token0?.symbol || '-';
-          const symbol1 = token1?.symbol || '-';
-          const price0 = priceMap[params.asset0?.toLowerCase()]?.price || 0;
-          const price1 = priceMap[params.asset1?.toLowerCase()]?.price || 0;
-          // TVL（USD換算）
-          const tvl = Number(reserves[0]) * price0 + Number(reserves[1]) * price1;
-          // QuoteのUSD換算
-          let quoteUsd = null;
-          if (quote && price1) {
-            quoteUsd = (Number(quote) * price1).toLocaleString(undefined, { maximumFractionDigits: 4 });
-          }
-          return {
-            addr,
-            available0,
-            available1,
-            price,
-            quote,
-            quoteUsd,
-            reserves,
-            params,
-            symbol0,
-            symbol1,
-            price0,
-            price1,
-            tvl,
-          };
-        } catch {
-          return null;
-        }
-      }));
-      setPoolDetails(details.filter(Boolean));
-      setLoading(false);
-    })();
-  }, [poolAddresses, client, account, amountIn, fromAddr, toAddr, tokenList]);
 
   // --- MaglevLensから全プール情報取得 ---
   useEffect(() => {

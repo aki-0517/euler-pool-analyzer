@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { TOKEN_LIST } from '../assets/tokenlist';
 import { NETWORKS } from '../assets/networks';
-import { parseUnits, getAddress, parseAbi, encodeAbiParameters, encodePacked, keccak256, fromHex, toHex } from 'viem';
-import { generatePrivateKey } from 'viem/accounts';
+import { parseUnits } from 'viem';
 import { createWalletClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 
@@ -22,19 +21,6 @@ const FACTORY_ABI = [
   // ... 必要に応じて他の関数 ...
 ];
 
-// Pool parameter ABI (equivalent to paramsAbi in LibEulerSwap.js)
-const PARAMS_ABI = [
-  { name: 'asset0', type: 'address' },
-  { name: 'asset1', type: 'address' },
-  { name: 'priceX', type: 'uint256' },
-  { name: 'priceY', type: 'uint256' },
-  { name: 'equilibriumReserve0', type: 'uint256' },
-  { name: 'equilibriumReserve1', type: 'uint256' },
-  { name: 'concentrationX', type: 'uint256' },
-  { name: 'concentrationY', type: 'uint256' },
-  { name: 'hook', type: 'address' },
-  { name: 'eulerAccount', type: 'address' },
-];
 
 export default function CreatePool({ networkKey }: { networkKey: string }) {
   const [asset0, setAsset0] = useState('');
