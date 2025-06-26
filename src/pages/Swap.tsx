@@ -95,7 +95,6 @@ export default function Swap({ networkKey }: { networkKey: string }) {
   useEffect(() => {
     if (!fromAddr || !toAddr) {
       setPoolAddresses([]);
-      setPoolDetails([]);
       return;
     }
     setLoading(true);
