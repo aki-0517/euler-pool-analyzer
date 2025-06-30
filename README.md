@@ -1,54 +1,137 @@
-# React + TypeScript + Vite
+# EulerSwap Analytics Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A read-only monitoring and analytics application for EulerSwap pools across multiple blockchain networks.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### 🔍 **Read-Only Pool Analysis**
+- Real-time pool discovery and monitoring
+- Comprehensive pool metrics (fees, TVL, balance ratios)
+- Vault availability tracking
+- Historical swap data analysis
+- Price chart visualization
+- Fee and volume analytics
 
-## Expanding the ESLint configuration
+### 🌐 **Multi-Network Support**
+- Ethereum Mainnet
+- Base
+- Avalanche
+- BSC (Binance Smart Chain)
+- Unichain
+- Local development environment
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 📊 **Analytics Features**
+- Pool performance metrics
+- Daily and cumulative trading statistics
+- APR estimates based on fee generation
+- Swap history with detailed transaction data
+- Network-wide protocol statistics
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+## Technology Stack
+
+- **Frontend**: React 19 + TypeScript + Vite
+- **Blockchain**: Viem library for Ethereum interactions
+- **Styling**: CSS + inline styles (no CSS framework)
+- **Build Tool**: Vite with TypeScript compilation
+
+## Development
+
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+
+### Getting Started
+
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+2. **Start development server**:
+   ```bash
+   npm run dev
+   ```
+
+3. **Build for production**:
+   ```bash
+   npm run build
+   ```
+
+4. **Preview production build**:
+   ```bash
+   npm run preview
+   ```
+
+5. **Lint code**:
+   ```bash
+   npm run lint
+   ```
+
+### Usage
+
+1. **Select Network**: Choose from supported blockchain networks in the sidebar
+2. **Browse Pools**: View all available pools for the selected network
+3. **Analyze Pool**: Click on any pool to view detailed analytics including:
+   - Pool parameters and reserves
+   - Fee structure and APR estimates
+   - Vault availability for both assets
+   - Historical trading data and charts
+   - Daily/cumulative metrics
+
+## Key Components
+
+### **App.tsx**
+- Main application component
+- Network management and switching
+- Pool data fetching and state management
+- Analytics calculations
+
+### **PoolAnalyzerMain.tsx**
+- Primary analytics dashboard
+- Pool metrics visualization
+- Historical data display
+
+### **LibEulerSwap.ts**
+- Mathematical utilities for price calculations
+- Pool health analysis functions
+- Read-only curve verification
+
+### **Network Configuration**
+- `src/assets/networks.ts` - Network configurations
+- `src/assets/tokenlist.ts` - Token definitions per network
+
+## Security
+
+⚠️ **This application is READ-ONLY** - it cannot perform any blockchain transactions or interact with smart contracts beyond reading data. All functionality is strictly limited to:
+- Reading pool data
+- Fetching historical events
+- Calculating analytics
+- Displaying information
+
+No private keys, wallets, or transaction capabilities are included.
+
+## Architecture
+
+The application follows a clean architecture pattern:
+
+```
+src/
+├── App.tsx                 # Main application component
+├── lib/
+│   └── LibEulerSwap.ts    # Mathematical utilities
+├── pages/
+│   └── PoolAnalyzerMain.tsx # Analytics dashboard
+├── assets/
+│   ├── networks.ts        # Network configurations
+│   └── tokenlist.ts       # Token definitions
+└── main.tsx               # Application entry point
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Smart Contract Integration
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+The app interacts with:
+- **Factory Contract**: Pool discovery and protocol parameters
+- **Pool Contract**: Pool data, reserves, and parameters
+- **Vault Contract**: ERC4626 vault balance information
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+All interactions are read-only via the Viem library.

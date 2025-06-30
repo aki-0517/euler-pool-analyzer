@@ -10,8 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "plotly.js": "^3.0.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-plotly.js": "^2.6.0",
+    "recharts": "^3.0.2",
     "viem": "^2.31.3"
   },
   "devDependencies": {

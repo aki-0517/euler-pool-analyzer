@@ -1,20 +1,14 @@
-import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import './App.css';
 import { createPublicClient, http } from 'viem';
-import { mainnet } from 'viem/chains';
 import { TOKEN_LIST } from './assets/tokenlist';
 import type { TokenInfo } from './assets/tokenlist';
 import { NETWORKS } from './assets/networks';
 import type { NetworkConfig } from './assets/networks';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import Swap from './pages/Swap';
-import CreatePool from './pages/CreatePool';
-import DepositPool from './pages/DepositPool';
 import PoolAnalyzerMain from './pages/PoolAnalyzerMain';
+import { GlobalStyles, NetworkSelector, ProtocolOverview, PoolSelectionGrid, PoolInfoHeader } from './components/ModernUI';
 
-// Mainnet EulerSwap contract address
-const EULER_FACTORY = '0xb013be1D0D380C13B58e889f412895970A2Cf228' as `0x${string}`;
-// Factory ABI (only necessary functions)
+// Enhanced Factory ABI with all available functions
 const FACTORY_ABI = [
   {
     "inputs": [],
@@ -24,15 +18,43 @@ const FACTORY_ABI = [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "pools",
+    "inputs": [{ "internalType": "uint256", "name": "start", "type": "uint256" }, { "internalType": "uint256", "name": "end", "type": "uint256" }],
+    "name": "poolsSlice",
     "outputs": [{ "internalType": "address[]", "name": "", "type": "address[]" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "asset0", "type": "address" }, { "internalType": "address", "name": "asset1", "type": "address" }],
+    "name": "poolsByPair",
+    "outputs": [{ "internalType": "address[]", "name": "", "type": "address[]" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "who", "type": "address" }],
+    "name": "poolByEulerAccount",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "protocolFee",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "protocolFeeRecipient",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "stateMutability": "view",
     "type": "function"
   }
 ];
 
-// Pool ABI (only necessary functions)
+// Enhanced Pool ABI with all available functions
 const POOL_ABI = [
   {
     "inputs": [],
@@ -81,10 +103,29 @@ const POOL_ABI = [
     ],
     "stateMutability": "view",
     "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getLimits",
+    "outputs": [
+      { "internalType": "uint256", "name": "maxIn0", "type": "uint256" },
+      { "internalType": "uint256", "name": "maxOut0", "type": "uint256" },
+      { "internalType": "uint256", "name": "maxIn1", "type": "uint256" },
+      { "internalType": "uint256", "name": "maxOut1", "type": "uint256" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "curve",
+    "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
+    "stateMutability": "pure",
+    "type": "function"
   }
 ];
 
-// IERC4626 ABI（VaultのAvailable取得用）
+// Enhanced Vault ABI with additional ERC4626 functions
 const VAULT_ABI = [
   {
     "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
@@ -99,101 +140,42 @@ const VAULT_ABI = [
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
-  }
-];
-
-// Add Factory ABI for poolsByPair, poolsByPairLength, poolByEulerAccount
-const EXTENDED_FACTORY_ABI = [
-  ...FACTORY_ABI,
-  {
-    "inputs": [
-      { "internalType": "address", "name": "asset0", "type": "address" },
-      { "internalType": "address", "name": "asset1", "type": "address" }
-    ],
-    "name": "poolsByPair",
-    "outputs": [{ "internalType": "address[]", "name": "", "type": "address[]" }],
-    "stateMutability": "view",
-    "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "who", "type": "address" }
-    ],
-    "name": "poolByEulerAccount",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "protocolFee",
+    "inputs": [{ "internalType": "uint256", "name": "assets", "type": "uint256" }],
+    "name": "convertToShares",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "protocolFeeRecipient",
-    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "uint256", "name": "start", "type": "uint256" },
-      { "internalType": "uint256", "name": "end", "type": "uint256" }
-    ],
-    "name": "poolsSlice",
-    "outputs": [{ "internalType": "address[]", "name": "", "type": "address[]" }],
-    "stateMutability": "view",
-    "type": "function"
-  }
-];
-
-// Pool ABI for computeQuote, getLimits
-const EXTENDED_POOL_ABI = [
-  ...POOL_ABI,
-  {
-    "inputs": [
-      { "internalType": "address", "name": "tokenIn", "type": "address" },
-      { "internalType": "address", "name": "tokenOut", "type": "address" },
-      { "internalType": "uint256", "name": "amount", "type": "uint256" },
-      { "internalType": "bool", "name": "exactIn", "type": "bool" }
-    ],
-    "name": "computeQuote",
+    "name": "totalAssets",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "tokenIn", "type": "address" },
-      { "internalType": "address", "name": "tokenOut", "type": "address" }
-    ],
-    "name": "getLimits",
-    "outputs": [
-      { "internalType": "uint256", "name": "maxIn", "type": "uint256" },
-      { "internalType": "uint256", "name": "maxOut", "type": "uint256" }
-    ],
+    "inputs": [],
+    "name": "totalSupply",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "asset",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "stateMutability": "view",
     "type": "function"
   }
 ];
 
-// Event topics for logs
-const EVENT_TOPICS = {
-  PoolDeployed: '0x7e2e7e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e', // placeholder, replace with actual
-  PoolUninstalled: '0x...', // placeholder
-  ProtocolFeeSet: '0x...', // placeholder
-  ProtocolFeeRecipientSet: '0x...', // placeholder
-  Swap: '0x...', // placeholder
-};
 
-const client = createPublicClient({
-  chain: mainnet,
-  transport: http()
-});
 
+
+
+// Type definitions
 type PoolParams = {
   vault0: string;
   vault1: string;
@@ -209,6 +191,17 @@ type PoolParams = {
   protocolFeeRecipient: string;
 };
 
+type VaultData = {
+  shares0: bigint;
+  shares1: bigint;
+  assets0: bigint;
+  assets1: bigint;
+  totalAssets0: bigint;
+  totalAssets1: bigint;
+  totalSupply0: bigint;
+  totalSupply1: bigint;
+};
+
 function App() {
   const [poolCount, setPoolCount] = useState<number | null>(null);
   const [poolAddresses, setPoolAddresses] = useState<string[]>([]);
@@ -222,20 +215,9 @@ function App() {
     reserve1: bigint;
     status: number;
   } | null>(null);
-  const [poolDetailLoading, setPoolDetailLoading] = useState(false);
-  const [poolDetailError, setPoolDetailError] = useState<string | null>(null);
-  const [asset0Filter, setAsset0Filter] = useState('');
-  const [asset1Filter, setAsset1Filter] = useState('');
-  const [accountSearch, setAccountSearch] = useState('');
-  const [accountPool, setAccountPool] = useState<string | null>(null);
-  const [accountPoolError, setAccountPoolError] = useState<string | null>(null);
   const [protocolFee, setProtocolFee] = useState<string | null>(null);
   const [protocolFeeRecipient, setProtocolFeeRecipient] = useState<string | null>(null);
-  const [swapSim, setSwapSim] = useState<{ direction: 'in' | 'out'; amount: string; result: string | null; error: string | null; limits: { maxIn: string; maxOut: string } | null }>({ direction: 'in', amount: '', result: null, error: null, limits: null });
   const [swapHistory, setSwapHistory] = useState<any[]>([]);
-  const [swapHistoryLoading, setSwapHistoryLoading] = useState(false);
-  const [events, setEvents] = useState<any[]>([]);
-  const swapSimAmountRef = useRef<HTMLInputElement>(null);
   const [networkKey, setNetworkKey] = useState('mainnet');
   const network: NetworkConfig = useMemo(() => NETWORKS.find(n => n.key === networkKey)!, [networkKey]);
   const [factoryAddress, setFactoryAddress] = useState<`0x${string}`>(network.factory as `0x${string}`);
@@ -247,8 +229,8 @@ function App() {
   const [dailyMetrics, setDailyMetrics] = useState<any[]>([]);
   const [cumulativeMetrics, setCumulativeMetrics] = useState<any>({});
 
-  // Add Vault Available to pool detail state
-  const [vaultAvailable, setVaultAvailable] = useState<{ available0: string | null, available1: string | null }>({ available0: null, available1: null });
+  // Enhanced state for comprehensive pool data
+  const [vaultData, setVaultData] = useState<VaultData | null>(null);
 
   useEffect(() => {
     if (!swapHistoryWithTimestamp.length || !poolDetail) {
@@ -334,7 +316,7 @@ function App() {
           const end = Math.min(i + batchSize, Number(count));
           const batch = await client.readContract({
             address: factoryAddress as `0x${string}`,
-            abi: EXTENDED_FACTORY_ABI,
+            abi: FACTORY_ABI,
             functionName: 'poolsSlice',
             args: [BigInt(i), BigInt(end)],
           }) as string[];
@@ -353,12 +335,9 @@ function App() {
   useEffect(() => {
     if (!selectedPool) {
       setPoolDetail(null);
-      setPoolDetailError(null);
-      setVaultAvailable({ available0: null, available1: null });
+      setVaultData(null);
       return;
     }
-    setPoolDetailLoading(true);
-    setPoolDetailError(null);
     setPoolDetail(null);
     const fetchDetail = async () => {
       try {
@@ -416,15 +395,19 @@ function App() {
             args: [shares1],
           }) as Promise<bigint>,
         ]);
-        setVaultAvailable({
-          available0: avail0.toString(),
-          available1: avail1.toString(),
+        setVaultData({
+          shares0: shares0,
+          shares1: shares1,
+          assets0: avail0,
+          assets1: avail1,
+          totalAssets0: 0n,
+          totalAssets1: 0n,
+          totalSupply0: 0n,
+          totalSupply1: 0n,
         });
       } catch (e) {
-        setPoolDetailError('Failed to fetch pool details.');
-        setVaultAvailable({ available0: null, available1: null });
+        setVaultData(null);
       }
-      setPoolDetailLoading(false);
     };
     fetchDetail();
   }, [selectedPool]);
@@ -434,8 +417,8 @@ function App() {
     const fetchFee = async () => {
       try {
         const [fee, recipient] = await Promise.all([
-          client.readContract({ address: factoryAddress as `0x${string}`, abi: EXTENDED_FACTORY_ABI, functionName: 'protocolFee' }) as Promise<bigint>,
-          client.readContract({ address: factoryAddress as `0x${string}`, abi: EXTENDED_FACTORY_ABI, functionName: 'protocolFeeRecipient' }) as Promise<string>,
+          client.readContract({ address: factoryAddress as `0x${string}`, abi: FACTORY_ABI, functionName: 'protocolFee' }) as Promise<bigint>,
+          client.readContract({ address: factoryAddress as `0x${string}`, abi: FACTORY_ABI, functionName: 'protocolFeeRecipient' }) as Promise<string>,
         ]);
         setProtocolFee((Number(fee) / 1e18).toString());
         setProtocolFeeRecipient(recipient);
@@ -447,121 +430,16 @@ function App() {
     fetchFee();
   }, [client, factoryAddress]);
 
-  // Pool filter by asset pair
-  const handlePairFilter = async () => {
-    if (!asset0Filter || !asset1Filter) return;
-    setLoading(true);
-    try {
-      const filtered = await client.readContract({
-        address: factoryAddress as `0x${string}`,
-        abi: EXTENDED_FACTORY_ABI,
-        functionName: 'poolsByPair',
-        args: [asset0Filter, asset1Filter],
-      }) as string[];
-      setPoolAddresses(filtered);
-    } catch {
-      setPoolAddresses([]);
-    }
-    setLoading(false);
-  };
 
-  // Account search
-  const handleAccountSearch = async () => {
-    if (!accountSearch) return;
-    setAccountPoolError(null);
-    setAccountPool(null);
-    try {
-      const pool = await client.readContract({
-        address: factoryAddress as `0x${string}`,
-        abi: EXTENDED_FACTORY_ABI,
-        functionName: 'poolByEulerAccount',
-        args: [accountSearch],
-      }) as string;
-      setAccountPool(pool && pool !== '0x0000000000000000000000000000000000000000' ? pool : null);
-      if (!pool || pool === '0x0000000000000000000000000000000000000000') setAccountPoolError('No pool found for this account.');
-    } catch {
-      setAccountPoolError('Failed to fetch pool for this account.');
-    }
-  };
 
-  // Swap simulator
-  const handleSwapSim = async () => {
-    if (!selectedPool || !poolDetail) return;
-    setSwapSim(s => ({ ...s, result: null, error: null }));
-    try {
-      const tokenIn = swapSim.direction === 'in' ? poolDetail.asset0 : poolDetail.asset1;
-      const tokenOut = swapSim.direction === 'in' ? poolDetail.asset1 : poolDetail.asset0;
-      const amount = BigInt(swapSim.amount);
-      const quote = await client.readContract({
-        address: selectedPool as `0x${string}`,
-        abi: EXTENDED_POOL_ABI,
-        functionName: 'computeQuote',
-        args: [tokenIn, tokenOut, amount, swapSim.direction === 'in'],
-      }) as bigint;
-      setSwapSim(s => ({ ...s, result: quote.toString() }));
-    } catch (e: any) {
-      setSwapSim(s => ({ ...s, result: null, error: 'Failed to get quote.' }));
-    }
-  };
 
-  // Fetch swap limits for simulator
-  useEffect(() => {
-    if (!selectedPool || !poolDetail) return;
-    const fetchLimits = async () => {
-      try {
-        const [maxIn, maxOut] = await client.readContract({
-          address: selectedPool as `0x${string}`,
-          abi: EXTENDED_POOL_ABI,
-          functionName: 'getLimits',
-          args: [poolDetail.asset0, poolDetail.asset1],
-        }) as [bigint, bigint];
-        setSwapSim(s => ({ ...s, limits: { maxIn: maxIn.toString(), maxOut: maxOut.toString() } }));
-      } catch {
-        setSwapSim(s => ({ ...s, limits: null }));
-      }
-    };
-    fetchLimits();
-  }, [selectedPool, poolDetail]);
 
-  // Asset pair filter using token symbols
-  const [asset0Symbol, setAsset0Symbol] = useState('');
-  const [asset1Symbol, setAsset1Symbol] = useState('');
-  const asset0Addr = useMemo(() => tokenList.find(t => t.symbol === asset0Symbol)?.address || '', [asset0Symbol, tokenList]);
-  const asset1Addr = useMemo(() => tokenList.find(t => t.symbol === asset1Symbol)?.address || '', [asset1Symbol, tokenList]);
 
-  // Event log fetching
-  const [eventLoading, setEventLoading] = useState(false);
-  const [eventError, setEventError] = useState<string | null>(null);
-  const [recentEvents, setRecentEvents] = useState<any[]>([]);
-  useEffect(() => {
-    let cancelled = false;
-    setEventLoading(true);
-    setEventError(null);
-    (async () => {
-      try {
-        const latestBlock = await client.getBlockNumber();
-        const fromBlock = (latestBlock - 5000n > 0n ? latestBlock - 5000n : 0n);
-        const logs = await client.getLogs({
-          address: factoryAddress,
-          fromBlock,
-        });
-        if (!cancelled) setRecentEvents(logs);
-      } catch (e) {
-        if (!cancelled) {
-          setEventError('Failed to fetch events');
-          setRecentEvents([]);
-        }
-      }
-      if (!cancelled) setEventLoading(false);
-    })();
-    return () => { cancelled = true; };
-  }, [client, factoryAddress]);
 
   // Swap history for selected pool
   useEffect(() => {
     if (!selectedPool) return;
     let cancelled = false;
-    setSwapHistoryLoading(true);
     (async () => {
       try {
         const latestBlock = await client.getBlockNumber();
@@ -574,7 +452,6 @@ function App() {
       } catch {
         if (!cancelled) setSwapHistory([]);
       }
-      if (!cancelled) setSwapHistoryLoading(false);
     })();
     return () => { cancelled = true; };
   }, [client, selectedPool]);
@@ -605,16 +482,6 @@ function App() {
     return () => { cancelled = true; };
   }, [swapHistory, client]);
 
-  // Helper: decode event args (viem log format)
-  function renderEventRow(log: any, i: number) {
-    return (
-      <tr key={i}>
-        <td>{log.eventName || log.topics?.[0]?.slice(0, 10) || 'Unknown'}</td>
-        <td>{log.blockNumber}</td>
-        <td style={{ fontSize: '0.85em', wordBreak: 'break-all' }}>{JSON.stringify(log.args || log.data)}</td>
-      </tr>
-    );
-  }
 
   // Helper: decode swap event args
   function renderSwapRow(log: any, i: number) {
@@ -634,43 +501,11 @@ function App() {
     );
   }
 
-  // SVG chart for swap history (amount0In or amount1In)
-  function SwapHistoryChart({ data }: { data: any[] }) {
-    if (!data.length) return null;
-    const points = data.slice(-20).map((log, i) => {
-      const y = Number(log.args?.amount0In || log.args?.amount1In || 0);
-      return { x: i, y };
-    });
-    const maxY = Math.max(...points.map(p => p.y), 1);
-    const width = 300, height = 80, pad = 20;
-    return (
-      <svg width={width} height={height} style={{ background: '#f8f9fa', borderRadius: 8, marginTop: 8 }}>
-        <polyline
-          fill="none"
-          stroke="#61dafb"
-          strokeWidth="2"
-          points={points.map(p => `${pad + (width - 2 * pad) * (p.x / Math.max(points.length - 1, 1))},${height - pad - (height - 2 * pad) * (p.y / maxY)}`).join(' ')}
-        />
-        {/* Axes */}
-        <line x1={pad} y1={height - pad} x2={width - pad} y2={height - pad} stroke="#bbb" />
-        <line x1={pad} y1={pad} x2={pad} y2={height - pad} stroke="#bbb" />
-        {/* Labels */}
-        <text x={pad} y={pad} fontSize="10" fill="#888">{maxY}</text>
-        <text x={pad} y={height - 4} fontSize="10" fill="#888">0</text>
-      </svg>
-    );
-  }
 
   // --- New: Main metrics calculation for Pool Analyzer ---
   // Get token info
   const asset0Info = useMemo(() => tokenList.find(t => t.address.toLowerCase() === poolDetail?.asset0?.toLowerCase()), [poolDetail, tokenList]);
   const asset1Info = useMemo(() => tokenList.find(t => t.address.toLowerCase() === poolDetail?.asset1?.toLowerCase()), [poolDetail, tokenList]);
-  // Fee (%)
-  const feePct = useMemo(() => poolDetail ? (Number(poolDetail.params.fee) / 1e6).toFixed(2) : '-', [poolDetail]);
-  // Balance ratio
-  const balanceRatio = useMemo(() => poolDetail ? (Number(poolDetail.reserve0) / Number(poolDetail.reserve1)).toFixed(3) : '-', [poolDetail]);
-  // TVL (show total reserve here, USD conversion needs API)
-  const tvl = useMemo(() => poolDetail ? (Number(poolDetail.reserve0) + Number(poolDetail.reserve1)).toLocaleString() : '-', [poolDetail]);
   // Swap volume (sum of last 20)
   const swapVolume = useMemo(() => swapHistory.reduce((sum, log) => sum + Number(log.args?.amount0In || 0) + Number(log.args?.amount1In || 0), 0), [swapHistory]);
   // Price history data
@@ -679,46 +514,11 @@ function App() {
     const a1 = Number(log.args?.amount1Out || 0);
     return a0 > 0 && a1 > 0 ? a1 / a0 : null;
   }).filter(v => v !== null), [swapHistory]);
-  // Fee APR (theoretical: annual volume × fee / TVL)
-  const feeApr = useMemo(() => {
-    if (!poolDetail || !swapVolume) return '-';
-    const fee = Number(poolDetail.params.fee) / 1e6;
-    // Assume last 20 swaps as 1 day, annualize
-    const annualVolume = swapVolume * 365;
-    const apr = tvl !== '-' && Number(tvl) > 0 ? (annualVolume * fee / Number(tvl) * 100).toFixed(2) : '-';
-    return apr;
-  }, [poolDetail, swapVolume, tvl]);
 
   // --- New: Main metrics calculation for Pool Analyzer ---
   function PoolStatsCards() {
-    return (
-      <div style={{ display: 'flex', gap: 24, margin: '1.5em 0' }}>
-        <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 120, textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: '#888' }}>Fee</div>
-          <div style={{ fontSize: 22, fontWeight: 600 }}>{feePct}%</div>
-        </div>
-        <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 120, textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: '#888' }}>TVL (sum)</div>
-          <div style={{ fontSize: 22, fontWeight: 600 }}>{tvl}</div>
-        </div>
-        <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 120, textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: '#888' }}>Vault 0 Available</div>
-          <div style={{ fontSize: 22, fontWeight: 600 }}>{vaultAvailable.available0 ?? '-'}</div>
-        </div>
-        <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 120, textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: '#888' }}>Vault 1 Available</div>
-          <div style={{ fontSize: 22, fontWeight: 600 }}>{vaultAvailable.available1 ?? '-'}</div>
-        </div>
-        <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 120, textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: '#888' }}>Balance Ratio</div>
-          <div style={{ fontSize: 22, fontWeight: 600 }}>{balanceRatio}</div>
-        </div>
-        <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 120, textAlign: 'center' }}>
-          <div style={{ fontSize: 13, color: '#888' }}>Fee APR (est)</div>
-          <div style={{ fontSize: 22, fontWeight: 600 }}>{feeApr === '-' ? '-' : feeApr + '%'}</div>
-        </div>
-      </div>
-    );
+    // This component is now replaced by the MetricsGrid but kept for compatibility
+    return null;
   }
 
   // --- New: Price history chart ---
@@ -743,47 +543,46 @@ function App() {
   }
 
   return (
-    <Router>
-      <div style={{ display: 'flex', minHeight: '100vh' }}>
-        {/* Sidebar: Network switcher and pool list */}
-        <aside style={{ width: 260, background: '#222', color: '#fff', padding: '2rem 1rem', minHeight: '100vh', textAlign: 'left' }}>
-          {/* Network Switcher */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ fontWeight: 'bold', marginBottom: 4, display: 'block' }}>Network</label>
-            <select value={networkKey} onChange={e => setNetworkKey(e.target.value)} style={{ width: '100%' }}>
-              {NETWORKS.map(n => (
-                <option key={n.key} value={n.key}>{n.name}</option>
-              ))}
-            </select>
+    <>
+      <GlobalStyles />
+      <div style={{ minHeight: '100vh', background: '#f1f5f9' }}>
+        {/* Main Content Container */}
+        <div style={{ maxWidth: 1400, margin: '0 auto', padding: 24 }}>
+          {/* Network Selection */}
+          <NetworkSelector 
+            networks={NETWORKS}
+            selectedNetwork={networkKey}
+            onNetworkChange={setNetworkKey}
+          />
+          
+          {/* Protocol Overview */}
+          <ProtocolOverview 
+            network={network}
+            poolCount={poolCount ?? 0}
+            protocolFee={protocolFee}
+            protocolFeeRecipient={protocolFeeRecipient ?? ''}
+            factoryAddress={factoryAddress}
+          />
+          
+          {/* Pool Selection */}
+          <div style={{ background: '#fff', borderRadius: 16, padding: 24, marginBottom: 24, boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+            <PoolSelectionGrid 
+              pools={poolAddresses}
+              selectedPool={selectedPool}
+              onPoolSelect={(pool) => setSelectedPool(pool as `0x${string}`)}
+              loading={loading}
+            />
           </div>
-          <h2>Pool Analyzer</h2>
-          <div style={{ marginTop: '2rem' }}>
-            <b>Pool List</b>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {loading ? <li>Loading...</li> :
-                poolAddresses.length === 0 ? <li>No pools</li> :
-                  poolAddresses.map(addr => (
-                    <li
-                      key={addr}
-                      style={{ fontSize: '0.9em', margin: '0.5em 0', wordBreak: 'break-all', cursor: 'pointer', color: selectedPool === addr ? '#61dafb' : undefined }}
-                      onClick={() => setSelectedPool(addr as `0x${string}`)}
-                    >
-                      {addr}
-                    </li>
-                  ))}
-            </ul>
-          </div>
-          <nav style={{ marginTop: 32 }}>
-            <Link to="/" style={{ display: 'block', color: '#fff', marginBottom: 12 }}>Pool Analyzer</Link>
-            <Link to="/swap" style={{ display: 'block', color: '#fff', marginBottom: 12 }}>Swap</Link>
-            <Link to="/create-pool" style={{ display: 'block', color: '#fff', marginBottom: 12 }}>Create Pool</Link>
-            <Link to="/deposit-pool" style={{ display: 'block', color: '#fff', marginBottom: 12 }}>Deposit</Link>
-          </nav>
-        </aside>
-        {/* Main: ルーティングで切り替え */}
-        <main style={{ flex: 1, background: '#f5f6fa', padding: '2rem' }}>
-          <Routes>
-            <Route path="/" element={
+          
+          {/* Pool Analysis */}
+          {selectedPool && poolDetail && (
+            <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+              <PoolInfoHeader 
+                poolAddress={selectedPool}
+                asset0Info={asset0Info}
+                asset1Info={asset1Info}
+                poolDetail={poolDetail}
+              />
               <PoolAnalyzerMain
                 network={network}
                 poolCount={poolCount ?? 0}
@@ -804,15 +603,13 @@ function App() {
                 swapHistory={swapHistory}
                 renderSwapRow={(row: any) => renderSwapRow(row, 0)}
                 PoolStatsCards={PoolStatsCards}
+                vaultData={vaultData}
               />
-            } />
-            <Route path="/swap" element={<Swap networkKey={networkKey} />} />
-            <Route path="/create-pool" element={<CreatePool networkKey={networkKey} />} />
-            <Route path="/deposit-pool" element={<DepositPool networkKey={networkKey} />} />
-          </Routes>
-        </main>
+            </div>
+          )}
+        </div>
       </div>
-    </Router>
+    </>
   );
 }
 
