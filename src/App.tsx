@@ -223,6 +223,9 @@ function App() {
   const [factoryAddress, setFactoryAddress] = useState<`0x${string}`>(network.factory as `0x${string}`);
   const [client, setClient] = useState(() => createPublicClient({ chain: network.viemChain, transport: http() }));
   const [tokenList, setTokenList] = useState<TokenInfo[]>(TOKEN_LIST[networkKey] || []);
+  const [poolSearchFilter, setPoolSearchFilter] = useState<string>('');
+  const [sideMenuOpen, setSideMenuOpen] = useState<boolean>(true);
+  const [poolDataLoading, setPoolDataLoading] = useState<boolean>(false);
   const [swapHistoryWithTimestamp, setSwapHistoryWithTimestamp] = useState<any[]>([]);
 
   // --- Fee & Volume Metrics Calculation (contract-accurate, English) ---
@@ -309,19 +312,26 @@ function App() {
           functionName: 'poolsLength',
         }) as bigint;
         setPoolCount(Number(count));
-        // Fetch all pool addresses in batches using poolsSlice
-        const batchSize = 100;
-        let allPools: string[] = [];
+        // Fetch all pool addresses in parallel batches using poolsSlice for maximum speed
+        const batchSize = 200; // Increased batch size for efficiency
+        const batchPromises: Promise<string[]>[] = [];
+        
+        // Create all batch promises
         for (let i = 0; i < Number(count); i += batchSize) {
           const end = Math.min(i + batchSize, Number(count));
-          const batch = await client.readContract({
-            address: factoryAddress as `0x${string}`,
-            abi: FACTORY_ABI,
-            functionName: 'poolsSlice',
-            args: [BigInt(i), BigInt(end)],
-          }) as string[];
-          allPools = allPools.concat(batch);
+          batchPromises.push(
+            client.readContract({
+              address: factoryAddress as `0x${string}`,
+              abi: FACTORY_ABI,
+              functionName: 'poolsSlice',
+              args: [BigInt(i), BigInt(end)],
+            }) as Promise<string[]>
+          );
         }
+        
+        // Execute all batches in parallel and flatten results
+        const batchResults = await Promise.all(batchPromises);
+        const allPools = batchResults.flat();
         setPoolAddresses(allPools);
       } catch (e) {
         setPoolCount(null);
@@ -336,11 +346,21 @@ function App() {
     if (!selectedPool) {
       setPoolDetail(null);
       setVaultData(null);
+      setPoolDataLoading(false);
       return;
     }
+    
+    // プール選択時に即座にローディング開始
+    setPoolDataLoading(true);
     setPoolDetail(null);
+    setVaultData(null);
+    
     const fetchDetail = async () => {
       try {
+        // 段階的にデータを読み込んで体感速度を向上
+        console.log('🔄 Fetching basic pool data...');
+        
+        // Step 1: 基本プール情報を並列取得
         const [assets, params, reserves] = await Promise.all([
           client.readContract({
             address: selectedPool as `0x${string}`,
@@ -358,6 +378,8 @@ function App() {
             functionName: 'getReserves',
           }) as Promise<[bigint, bigint, number]>,
         ]);
+        
+        // 基本情報をすぐに表示
         setPoolDetail({
           asset0: assets[0],
           asset1: assets[1],
@@ -366,7 +388,11 @@ function App() {
           reserve1: reserves[1],
           status: reserves[2],
         });
-        // Vault Available取得
+        
+        console.log('✅ Basic pool data fetched successfully');
+        console.log('🔄 Fetching vault data...');
+        
+        // Step 2: ボルト情報を並列取得
         const [shares0, shares1] = await Promise.all([
           client.readContract({
             address: params.vault0 as `0x${string}`,
@@ -381,7 +407,9 @@ function App() {
             args: [params.eulerAccount],
           }) as Promise<bigint>,
         ]);
-        const [avail0, avail1] = await Promise.all([
+        
+        // shares取得後にconvertToAssetsを実行
+        const [convertedAssets0, convertedAssets1] = await Promise.all([
           client.readContract({
             address: params.vault0 as `0x${string}`,
             abi: VAULT_ABI,
@@ -395,22 +423,30 @@ function App() {
             args: [shares1],
           }) as Promise<bigint>,
         ]);
+        
         setVaultData({
           shares0: shares0,
           shares1: shares1,
-          assets0: avail0,
-          assets1: avail1,
+          assets0: convertedAssets0,
+          assets1: convertedAssets1,
           totalAssets0: 0n,
           totalAssets1: 0n,
           totalSupply0: 0n,
           totalSupply1: 0n,
         });
+        
+        console.log('✅ Vault data fetched successfully');
+        
       } catch (e) {
+        console.error('❌ Pool data fetch error:', e);
         setVaultData(null);
+      } finally {
+        setPoolDataLoading(false);
       }
     };
+    
     fetchDetail();
-  }, [selectedPool]);
+  }, [selectedPool, client]);
 
   // Fetch protocol fee info
   useEffect(() => {
@@ -436,49 +472,93 @@ function App() {
 
 
 
-  // Swap history for selected pool
+  // Swap history for selected pool (最適化版)
   useEffect(() => {
-    if (!selectedPool) return;
+    if (!selectedPool) {
+      setSwapHistory([]);
+      return;
+    }
+    
     let cancelled = false;
+    
     (async () => {
       try {
+        console.log('🔄 Fetching swap history...');
+        
         const latestBlock = await client.getBlockNumber();
-        const fromBlock = (latestBlock - 5000n > 0n ? latestBlock - 5000n : 0n);
+        // ブロック範囲を1000に減らして高速化
+        const fromBlock = (latestBlock - 1000n > 0n ? latestBlock - 1000n : 0n);
+        
         const logs = await client.getLogs({
           address: selectedPool!,
           fromBlock,
         });
-        if (!cancelled) setSwapHistory(logs);
-      } catch {
+        
+        if (!cancelled) {
+          setSwapHistory(logs);
+          console.log(`✅ Swap history fetched successfully (${logs.length} entries)`);
+        }
+      } catch (error) {
+        console.error('❌ Swap history fetch error:', error);
         if (!cancelled) setSwapHistory([]);
       }
     })();
+    
     return () => { cancelled = true; };
   }, [client, selectedPool]);
 
-  // swapHistory取得後、blockNumberからtimestampを取得して付与
+  // swapHistory取得後、blockNumberからtimestampを取得して付与（最適化版）
   useEffect(() => {
     if (!swapHistory.length || !client) {
       setSwapHistoryWithTimestamp([]);
       return;
     }
+    
     let cancelled = false;
+    
     (async () => {
-      // blockNumberの重複を避けて一括取得
-      const blockNumbers = Array.from(new Set(swapHistory.map(log => log.blockNumber)));
-      const blockMap: Record<string, number> = {};
-      await Promise.all(blockNumbers.map(async (bn) => {
-        try {
-          const block = await client.getBlock({ blockNumber: BigInt(bn) });
-          blockMap[bn] = Number(block.timestamp);
-        } catch {
-          blockMap[bn] = 0;
+      try {
+        console.log('🔄 Fetching block timestamps...');
+        
+        // blockNumberの重複を避けて一括取得（最大10ブロックまで制限）
+        const uniqueBlockNumbers = Array.from(new Set(swapHistory.map(log => log.blockNumber))).slice(0, 10);
+        const blockMap: Record<string, number> = {};
+        
+        // 並列でブロック情報を取得（最大5並列）
+        const batchSize = 5;
+        for (let i = 0; i < uniqueBlockNumbers.length; i += batchSize) {
+          const batch = uniqueBlockNumbers.slice(i, i + batchSize);
+          
+          await Promise.all(batch.map(async (bn) => {
+            try {
+              const block = await client.getBlock({ blockNumber: BigInt(bn) });
+              blockMap[bn] = Number(block.timestamp);
+            } catch (error) {
+              console.warn(`⚠️ Failed to fetch timestamp for block ${bn}:`, error);
+              blockMap[bn] = 0;
+            }
+          }));
+          
+          if (cancelled) return;
         }
-      }));
-      if (cancelled) return;
-      // 各logにtimestampを付与
-      setSwapHistoryWithTimestamp(swapHistory.map(log => ({ ...log, timestamp: blockMap[log.blockNumber] })));
+        
+        if (cancelled) return;
+        
+        // 各logにtimestampを付与
+        const enrichedHistory = swapHistory.map(log => ({ 
+          ...log, 
+          timestamp: blockMap[log.blockNumber] || 0 
+        }));
+        
+        setSwapHistoryWithTimestamp(enrichedHistory);
+        console.log(`✅ Block timestamps fetched successfully (${uniqueBlockNumbers.length} blocks)`);
+        
+      } catch (error) {
+        console.error('❌ Block timestamp fetch error:', error);
+        if (!cancelled) setSwapHistoryWithTimestamp(swapHistory.map(log => ({ ...log, timestamp: 0 })));
+      }
     })();
+    
     return () => { cancelled = true; };
   }, [swapHistory, client]);
 
@@ -542,19 +622,105 @@ function App() {
     );
   }
 
+  // Filtered pools based on search
+  const filteredPools = poolAddresses.filter(pool => {
+    if (!poolSearchFilter) return true;
+    return pool.toLowerCase().includes(poolSearchFilter.toLowerCase());
+  });
+
   return (
     <>
       <GlobalStyles />
-      <div style={{ minHeight: '100vh', background: '#f1f5f9' }}>
-        {/* Main Content Container */}
-        <div style={{ maxWidth: 1400, margin: '0 auto', padding: 24 }}>
-          {/* Network Selection */}
-          <NetworkSelector 
-            networks={NETWORKS}
-            selectedNetwork={networkKey}
-            onNetworkChange={setNetworkKey}
-          />
-          
+      <div style={{ minHeight: '100vh', background: '#f1f5f9', display: 'flex' }}>
+        {/* Side Menu */}
+        <div style={{ 
+          width: sideMenuOpen ? 400 : 60, 
+          background: '#fff', 
+          boxShadow: '2px 0 10px rgba(0,0,0,0.1)',
+          transition: 'width 0.3s ease',
+          position: 'relative',
+          zIndex: 100
+        }}>
+          {/* Toggle Button */}
+          <button 
+            onClick={() => setSideMenuOpen(!sideMenuOpen)}
+            style={{
+              position: 'absolute',
+              top: 20,
+              right: -15,
+              width: 30,
+              height: 30,
+              borderRadius: '50%',
+              background: '#3b82f6',
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 16,
+              boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)'
+            }}
+          >
+            {sideMenuOpen ? '‹' : '›'}
+          </button>
+
+          {sideMenuOpen && (
+            <div style={{ padding: 20, height: '100vh', overflowY: 'auto' }}>
+              {/* Network Selection */}
+              <div style={{ marginBottom: 24 }}>
+                <NetworkSelector 
+                  networks={NETWORKS}
+                  selectedNetwork={networkKey}
+                  onNetworkChange={setNetworkKey}
+                />
+              </div>
+
+              {/* Pool Search Filter */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ 
+                  display: 'block', 
+                  fontSize: 12, 
+                  fontWeight: 600, 
+                  color: '#6b7280', 
+                  marginBottom: 8,
+                  textTransform: 'uppercase',
+                  letterSpacing: 1
+                }}>
+                  Filter Pools
+                </label>
+                <input
+                  type="text"
+                  placeholder="Search by address..."
+                  value={poolSearchFilter}
+                  onChange={(e) => setPoolSearchFilter(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 8,
+                    fontSize: 14,
+                    outline: 'none',
+                    transition: 'border-color 0.2s ease'
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+                  onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                />
+              </div>
+
+              {/* Pool Selection */}
+              <PoolSelectionGrid 
+                pools={filteredPools}
+                selectedPool={selectedPool}
+                onPoolSelect={(pool) => setSelectedPool(pool as `0x${string}`)}
+                loading={loading}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Main Content */}
+        <div style={{ flex: 1, padding: 24, maxWidth: 'calc(100vw - 400px)' }}>
           {/* Protocol Overview */}
           <ProtocolOverview 
             network={network}
@@ -564,19 +730,44 @@ function App() {
             factoryAddress={factoryAddress}
           />
           
-          {/* Pool Selection */}
-          <div style={{ background: '#fff', borderRadius: 16, padding: 24, marginBottom: 24, boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-            <PoolSelectionGrid 
-              pools={poolAddresses}
-              selectedPool={selectedPool}
-              onPoolSelect={(pool) => setSelectedPool(pool as `0x${string}`)}
-              loading={loading}
-            />
-          </div>
-          
-          {/* Pool Analysis */}
-          {selectedPool && poolDetail && (
-            <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+          {/* Pool Analysis - Now takes full width and is more prominent */}
+          {poolDataLoading ? (
+            <div style={{ 
+              background: '#fff', 
+              borderRadius: 16, 
+              padding: 64, 
+              textAlign: 'center',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+              minHeight: 400,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <div style={{
+                width: 60,
+                height: 60,
+                border: '6px solid #e0e7ff',
+                borderTop: '6px solid #3b82f6',
+                borderRadius: '50%',
+                animation: 'spin 1.5s linear infinite',
+                marginBottom: 24
+              }} />
+              <h2 style={{ color: '#3b82f6', margin: 0, fontSize: 24, fontWeight: 600 }}>Loading Pool Analytics...</h2>
+              <p style={{ color: '#6b7280', marginTop: 8, fontSize: 16 }}>Please wait a moment</p>
+              <div style={{ 
+                marginTop: 16,
+                padding: '8px 16px',
+                background: '#f1f5f9',
+                borderRadius: 8,
+                fontSize: 14,
+                color: '#6b7280'
+              }}>
+                💡 Initial loading may take some time
+              </div>
+            </div>
+          ) : selectedPool && poolDetail ? (
+            <div style={{ background: '#fff', borderRadius: 16, padding: 32, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
               <PoolInfoHeader 
                 poolAddress={selectedPool}
                 asset0Info={asset0Info}
@@ -605,6 +796,18 @@ function App() {
                 PoolStatsCards={PoolStatsCards}
                 vaultData={vaultData}
               />
+            </div>
+          ) : (
+            <div style={{ 
+              background: '#fff', 
+              borderRadius: 16, 
+              padding: 64, 
+              textAlign: 'center',
+              boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
+            }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
+              <h2 style={{ color: '#6b7280', margin: 0, fontSize: 24 }}>Select a Pool to View Analytics</h2>
+              <p style={{ color: '#9ca3af', marginTop: 8 }}>Choose a pool from the side menu to see detailed analytics and metrics</p>
             </div>
           )}
         </div>

@@ -181,10 +181,10 @@ export const PoolSelectionGrid: React.FC<{
       </h3>
       
       <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
-        gap: 12,
-        maxHeight: 400,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        maxHeight: 'calc(100vh - 300px)',
         overflowY: 'auto',
         padding: 4
       }}>
@@ -195,12 +195,13 @@ export const PoolSelectionGrid: React.FC<{
             style={{
               background: selectedPool === address ? '#eff6ff' : '#fff',
               border: selectedPool === address ? '2px solid #3b82f6' : '1px solid #e5e7eb',
-              borderRadius: 12,
-              padding: 16,
+              borderRadius: 8,
+              padding: 12,
               textAlign: 'left',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
-              boxShadow: selectedPool === address ? '0 4px 12px rgba(59, 130, 246, 0.15)' : '0 1px 3px rgba(0,0,0,0.1)',
+              boxShadow: selectedPool === address ? '0 2px 8px rgba(59, 130, 246, 0.15)' : '0 1px 2px rgba(0,0,0,0.05)',
+              width: '100%'
             }}
             onMouseEnter={(e) => {
               if (selectedPool !== address) {
@@ -232,6 +233,16 @@ export const PoolSelectionGrid: React.FC<{
             }}>
               {formatAddress(address, { short: true, startChars: 8, endChars: 6 })}
             </div>
+            {selectedPool === address && (
+              <div style={{
+                fontSize: 11,
+                color: '#3b82f6',
+                marginTop: 4,
+                fontWeight: 600
+              }}>
+                ✓ Selected
+              </div>
+            )}
           </button>
         ))}
       </div>

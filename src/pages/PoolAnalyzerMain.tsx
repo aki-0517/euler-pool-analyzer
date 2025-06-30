@@ -33,10 +33,9 @@ interface PoolAnalyzerMainProps {
 }
 
 const PoolAnalyzerMain: React.FC<PoolAnalyzerMainProps> = ({
-  network, poolCount, protocolFee, protocolFeeRecipient, factoryAddress,
   selectedPool, poolDetail,
   asset0Info, asset1Info, cumulativeMetrics, dailyMetrics, swapVolume,
-  PriceHistoryChart, swapHistory, renderSwapRow, PoolStatsCards, vaultData
+  PriceHistoryChart, swapHistory, PoolStatsCards, vaultData
 }) => {
   
   // Calculate enhanced metrics for the enhanced charts
@@ -95,25 +94,16 @@ const PoolAnalyzerMain: React.FC<PoolAnalyzerMainProps> = ({
   const enhancedMetrics = calculateEnhancedMetrics();
   return (
     <>
-      {/* Global summary */}
-      <section style={{ marginBottom: '2rem', background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #0001', padding: '1.5rem', maxWidth: 800 }}>
-        <h2 style={{ marginBottom: 8 }}>EulerSwap Summary</h2>
-        <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'center' }}>
-          <div><b>Network:</b> {network.name}</div>
-          <div><b>Total Pools:</b> {poolCount ?? '...'}</div>
-          <div><b>Protocol Fee:</b> {protocolFee ?? '...'}</div>
-          <div><b>Protocol Fee Recipient:</b> <span style={{ fontSize: '0.95em', wordBreak: 'break-all' }}>{protocolFeeRecipient ?? '...'}</span></div>
-          <div><b>Factory:</b> <span style={{ fontSize: '0.95em', wordBreak: 'break-all' }}>{factoryAddress}</span></div>
-        </div>
-      </section>
-      {/* Pool analyzer */}
+      {/* Enhanced Pool Analytics */}
       {selectedPool && poolDetail && (
-        <section style={{ marginTop: '2rem', textAlign: 'left', background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #0001', padding: '2rem', maxWidth: 800 }}>
-          <h2 style={{ marginBottom: 8 }}>Pool Analyzer</h2>
-          <div style={{ fontSize: '1.1em', marginBottom: 8 }}>
-            <b>{asset0Info?.symbol || poolDetail.asset0}</b> / <b>{asset1Info?.symbol || poolDetail.asset1}</b>
-            <span style={{ color: '#888', fontSize: '0.9em', marginLeft: 8 }}>{selectedPool}</span>
-          </div>
+        <section style={{ 
+          marginTop: '2rem', 
+          textAlign: 'left', 
+          background: '#fff', 
+          borderRadius: 16, 
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)', 
+          padding: '2.5rem'
+        }}>
           <PoolStatsCards />
           
           {/* Enhanced Metrics Cards */}
@@ -156,100 +146,229 @@ const PoolAnalyzerMain: React.FC<PoolAnalyzerMainProps> = ({
               />
             </div>
           )}
-          {/* --- New: Fee & Volume Metrics Cards --- */}
-          <div style={{ display: 'flex', gap: 24, margin: '1.5em 0', flexWrap: 'wrap' }}>
-            <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 160, textAlign: 'center' }}>
-              <div style={{ fontSize: 13, color: '#888' }}>Cumulative Protocol Fees</div>
-              <div style={{ fontSize: 22, fontWeight: 600 }}>{cumulativeMetrics.protocolFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '-'}</div>
+          {/* Enhanced Key Metrics Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, margin: '2rem 0' }}>
+            <div style={{ 
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+              borderRadius: 16, 
+              padding: 24, 
+              color: '#fff',
+              boxShadow: '0 8px 25px rgba(16, 185, 129, 0.25)'
+            }}>
+              <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Protocol Fees</div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>{cumulativeMetrics.protocolFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '-'}</div>
+              <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>Cumulative earnings</div>
             </div>
-            <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 160, textAlign: 'center' }}>
-              <div style={{ fontSize: 13, color: '#888' }}>Cumulative LP Fees</div>
-              <div style={{ fontSize: 22, fontWeight: 600 }}>{cumulativeMetrics.lpFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '-'}</div>
+            <div style={{ 
+              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', 
+              borderRadius: 16, 
+              padding: 24, 
+              color: '#fff',
+              boxShadow: '0 8px 25px rgba(59, 130, 246, 0.25)'
+            }}>
+              <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>LP Fees</div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>{cumulativeMetrics.lpFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '-'}</div>
+              <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>Liquidity provider rewards</div>
             </div>
-            <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 160, textAlign: 'center' }}>
-              <div style={{ fontSize: 13, color: '#888' }}>Cumulative Total Fees</div>
-              <div style={{ fontSize: 22, fontWeight: 600 }}>{cumulativeMetrics.totalFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '-'}</div>
+            <div style={{ 
+              background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', 
+              borderRadius: 16, 
+              padding: 24, 
+              color: '#fff',
+              boxShadow: '0 8px 25px rgba(139, 92, 246, 0.25)'
+            }}>
+              <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Total Fees</div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>{cumulativeMetrics.totalFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '-'}</div>
+              <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>Combined fee revenue</div>
             </div>
-            <div style={{ background: '#f8f9fa', borderRadius: 8, padding: 16, minWidth: 160, textAlign: 'center' }}>
-              <div style={{ fontSize: 13, color: '#888' }}>Cumulative Trading Volume</div>
-              <div style={{ fontSize: 22, fontWeight: 600 }}>{cumulativeMetrics.tradingVolume?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '-'}</div>
+            <div style={{ 
+              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', 
+              borderRadius: 16, 
+              padding: 24, 
+              color: '#fff',
+              boxShadow: '0 8px 25px rgba(245, 158, 11, 0.25)'
+            }}>
+              <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Trading Volume</div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>{cumulativeMetrics.tradingVolume?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '-'}</div>
+              <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>Total volume traded</div>
             </div>
           </div>
-          {/* --- New: Daily Metrics Table --- */}
-          <div style={{ margin: '2em 0 1em 0' }}>
-            <b>Daily Fee & Volume Metrics</b>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', fontSize: '0.95em', marginTop: 8, background: '#f8f9fa', borderRadius: 8 }}>
-                <thead>
-                  <tr>
-                    <th>Date (UTC)</th>
-                    <th>Protocol Fees</th>
-                    <th>LP Fees</th>
-                    <th>Total Fees</th>
-                    <th>Trading Volume</th>
-                    <th>Swap Count</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dailyMetrics.map((row: any) => (
-                    <tr key={row.day}>
-                      <td>{row.day}</td>
-                      <td>{row.protocolFee.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
-                      <td>{row.lpFee.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
-                      <td>{row.totalFee.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
-                      <td>{row.tradingVolume.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
-                      <td>{row.swapCount}</td>
+          {/* Enhanced Daily Metrics Table */}
+          <div style={{ margin: '3rem 0' }}>
+            <h3 style={{ 
+              fontSize: 20, 
+              fontWeight: 600, 
+              color: '#1f2937', 
+              marginBottom: 16
+            }}>Daily Performance Breakdown</h3>
+            <div style={{ 
+              background: '#fff', 
+              borderRadius: 16, 
+              overflow: 'hidden',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              border: '1px solid #e5e7eb'
+            }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ 
+                  width: '100%', 
+                  fontSize: 14,
+                  borderCollapse: 'collapse'
+                }}>
+                  <thead>
+                    <tr style={{ background: '#f8fafc' }}>
+                      <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Date (UTC)</th>
+                      <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Protocol Fees</th>
+                      <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>LP Fees</th>
+                      <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Total Fees</th>
+                      <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Trading Volume</th>
+                      <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Swaps</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {dailyMetrics.map((row: any, index: number) => (
+                      <tr key={row.day} style={{ 
+                        background: index % 2 === 0 ? '#fff' : '#f9fafb',
+                        borderBottom: '1px solid #f1f5f9'
+                      }}>
+                        <td style={{ padding: '16px 20px', fontWeight: 500, color: '#1f2937' }}>{row.day}</td>
+                        <td style={{ padding: '16px 20px', textAlign: 'right', fontFamily: 'monospace', color: '#059669' }}>{row.protocolFee.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+                        <td style={{ padding: '16px 20px', textAlign: 'right', fontFamily: 'monospace', color: '#3b82f6' }}>{row.lpFee.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+                        <td style={{ padding: '16px 20px', textAlign: 'right', fontFamily: 'monospace', color: '#7c3aed' }}>{row.totalFee.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+                        <td style={{ padding: '16px 20px', textAlign: 'right', fontFamily: 'monospace', color: '#d97706' }}>{row.tradingVolume.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+                        <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, color: '#6b7280' }}>{row.swapCount}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-          {/* Enhanced Charts Section */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: 20, margin: '2rem 0' }}>
-            <div>
-              <h3 style={{ marginBottom: 16 }}>Volume Trends</h3>
-              <VolumeChart data={dailyMetrics} />
-            </div>
-            <div>
-              <h3 style={{ marginBottom: 16 }}>Fee Breakdown</h3>
-              <FeeBreakdownChart data={cumulativeMetrics} />
+          {/* Enhanced Charts Section - Larger and More Prominent */}
+          <div style={{ margin: '3rem 0' }}>
+            <h3 style={{ 
+              fontSize: 24, 
+              fontWeight: 700, 
+              color: '#1f2937', 
+              marginBottom: 24,
+              textAlign: 'center'
+            }}>Analytics & Performance Charts</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: 30 }}>
+              <div style={{ 
+                background: '#f8fafc', 
+                borderRadius: 16, 
+                padding: 24,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+              }}>
+                <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: '#374151' }}>Volume Trends</h4>
+                <VolumeChart data={dailyMetrics} />
+              </div>
+              <div style={{ 
+                background: '#f8fafc', 
+                borderRadius: 16, 
+                padding: 24,
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+              }}>
+                <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: '#374151' }}>Fee Breakdown</h4>
+                <FeeBreakdownChart data={cumulativeMetrics} />
+              </div>
             </div>
           </div>
           
-          {/* Original Price History Chart */}
-          <div style={{ margin: '2em 0 1em 0' }}>
-            <b>Price History</b>
-            <PriceHistoryChart />
+          {/* Enhanced Price History Section */}
+          <div style={{ margin: '3rem 0' }}>
+            <h3 style={{ 
+              fontSize: 20, 
+              fontWeight: 600, 
+              color: '#1f2937', 
+              marginBottom: 16
+            }}>Price History Analysis</h3>
+            <div style={{ 
+              background: '#f8fafc', 
+              borderRadius: 16, 
+              padding: 24,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+            }}>
+              <PriceHistoryChart />
+            </div>
           </div>
-          {/* Existing swap volume, price history, and swap history table remain below */}
-          <div style={{ margin: '1.5em 0 0.5em 0' }}>
-            <b>Swap Volume (last 20):</b> {swapVolume.toLocaleString()}
-          </div>
-          <div style={{ margin: '1em 0' }}>
-            <b>Swap History (last 20)</b>
-            <table style={{ width: '100%', fontSize: '0.95em', marginBottom: 8 }}>
-              <thead>
-                <tr>
-                  <th>Sender</th>
-                  <th>Amount0In</th>
-                  <th>Amount1In</th>
-                  <th>Amount0Out</th>
-                  <th>Amount1Out</th>
-                  <th>Reserve0</th>
-                  <th>Reserve1</th>
-                  <th>To</th>
-                  <th>Block</th>
-                </tr>
-              </thead>
-              <tbody>
-                {swapHistory.slice(-20).reverse().map(renderSwapRow)}
-              </tbody>
-            </table>
+          {/* Enhanced Transaction History Section */}
+          <div style={{ margin: '3rem 0' }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              marginBottom: 20
+            }}>
+              <h3 style={{ 
+                fontSize: 20, 
+                fontWeight: 600, 
+                color: '#1f2937', 
+                margin: 0
+              }}>Recent Transaction History</h3>
+              <div style={{ 
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                color: '#fff',
+                padding: '8px 16px',
+                borderRadius: 8,
+                fontSize: 14,
+                fontWeight: 600
+              }}>
+                Volume: {swapVolume.toLocaleString()}
+              </div>
+            </div>
+            <div style={{ 
+              background: '#fff', 
+              borderRadius: 16, 
+              overflow: 'hidden',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              border: '1px solid #e5e7eb'
+            }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ 
+                  width: '100%', 
+                  fontSize: 13,
+                  borderCollapse: 'collapse'
+                }}>
+                  <thead>
+                    <tr style={{ background: '#f8fafc' }}>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Sender</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Amount0 In</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Amount1 In</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Amount0 Out</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Amount1 Out</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Reserve0</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Reserve1</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>To</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Block</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {swapHistory.slice(-20).reverse().map((log, index) => {
+                      const args = log.args || {};
+                      return (
+                        <tr key={index} style={{ 
+                          background: index % 2 === 0 ? '#fff' : '#f9fafb',
+                          borderBottom: '1px solid #f1f5f9'
+                        }}>
+                          <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: 11, color: '#6b7280' }}>{args.sender?.slice(0, 10)}...</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: '#1f2937' }}>{args.amount0In}</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: '#1f2937' }}>{args.amount1In}</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: '#1f2937' }}>{args.amount0Out}</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: '#1f2937' }}>{args.amount1Out}</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: '#6b7280' }}>{args.reserve0}</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: '#6b7280' }}>{args.reserve1}</td>
+                          <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: 11, color: '#6b7280' }}>{args.to?.slice(0, 10)}...</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 500, color: '#1f2937' }}>{log.blockNumber}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </section>
       )}
-      {!selectedPool && <div style={{ marginTop: 80, color: '#888', fontSize: '1.2em' }}>Please select a pool</div>}
     </>
   );
 };
