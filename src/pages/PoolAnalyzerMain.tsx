@@ -20,8 +20,6 @@ interface PoolAnalyzerMainProps {
   selectedPool: string | null;
   setSelectedPool: React.Dispatch<React.SetStateAction<`0x${string}` | null>>;
   poolDetail: any;
-  asset0Info: any;
-  asset1Info: any;
   cumulativeMetrics: any;
   dailyMetrics: any[];
   swapVolume: number;
@@ -34,7 +32,7 @@ interface PoolAnalyzerMainProps {
 
 const PoolAnalyzerMain: React.FC<PoolAnalyzerMainProps> = ({
   selectedPool, poolDetail,
-  asset0Info, asset1Info, cumulativeMetrics, dailyMetrics, swapVolume,
+  cumulativeMetrics, dailyMetrics, swapVolume,
   PriceHistoryChart, swapHistory, PoolStatsCards, vaultData
 }) => {
   
