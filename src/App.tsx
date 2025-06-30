@@ -785,8 +785,6 @@ function App() {
                 selectedPool={selectedPool ?? ''}
                 setSelectedPool={setSelectedPool}
                 poolDetail={poolDetail}
-                asset0Info={asset0Info}
-                asset1Info={asset1Info}
                 cumulativeMetrics={cumulativeMetrics}
                 dailyMetrics={dailyMetrics}
                 swapVolume={swapVolume ?? 0}
