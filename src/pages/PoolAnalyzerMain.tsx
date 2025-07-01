@@ -147,54 +147,124 @@ const PoolAnalyzerMain: React.FC<PoolAnalyzerMainProps> = ({
           )}
           {/* Enhanced Key Metrics Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, margin: '2rem 0' }}>
-            <div style={{ 
-              background: 'var(--euler-dark-surface)', 
-              borderRadius: 16, 
-              padding: 24, 
-              color: 'var(--euler-text-primary)',
-              boxShadow: '0 8px 25px rgba(42, 229, 185, 0.2)',
-              border: '2px solid var(--euler-primary)'
-            }}>
-              <div style={{ fontSize: 14, color: 'var(--euler-text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Protocol Fees</div>
-              <div style={{ fontSize: 28, fontWeight: 400, fontFamily: 'var(--font-headline)', color: 'var(--euler-primary)' }}>{cumulativeMetrics.protocolFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '0'}</div>
-              <div style={{ fontSize: 12, color: 'var(--euler-text-secondary)', marginTop: 4, fontFamily: 'var(--font-body)' }}>Cumulative earnings</div>
-            </div>
-            <div style={{ 
-              background: 'var(--euler-dark-surface)', 
-              borderRadius: 16, 
-              padding: 24, 
-              color: 'var(--euler-text-primary)',
-              boxShadow: '0 8px 25px rgba(42, 229, 185, 0.2)',
-              border: '2px solid var(--euler-accent)'
-            }}>
-              <div style={{ fontSize: 14, color: 'var(--euler-text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'var(--font-body)', fontWeight: 500 }}>LP Fees</div>
-              <div style={{ fontSize: 28, fontWeight: 400, fontFamily: 'var(--font-headline)', color: 'var(--euler-accent)' }}>{cumulativeMetrics.lpFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '0'}</div>
-              <div style={{ fontSize: 12, color: 'var(--euler-text-secondary)', marginTop: 4, fontFamily: 'var(--font-body)' }}>Liquidity provider rewards</div>
-            </div>
-            <div style={{ 
-              background: 'var(--euler-dark-surface)', 
-              borderRadius: 16, 
-              padding: 24, 
-              color: 'var(--euler-text-primary)',
-              boxShadow: '0 8px 25px rgba(42, 229, 185, 0.2)',
-              border: '2px solid var(--euler-secondary)'
-            }}>
-              <div style={{ fontSize: 14, color: 'var(--euler-text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Total Fees</div>
-              <div style={{ fontSize: 28, fontWeight: 400, fontFamily: 'var(--font-headline)', color: 'var(--euler-secondary)' }}>{cumulativeMetrics.totalFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '0'}</div>
-              <div style={{ fontSize: 12, color: 'var(--euler-text-secondary)', marginTop: 4, fontFamily: 'var(--font-body)' }}>Combined fee revenue</div>
-            </div>
-            <div style={{ 
-              background: 'var(--euler-dark-surface)', 
-              borderRadius: 16, 
-              padding: 24, 
-              color: 'var(--euler-text-primary)',
-              boxShadow: '0 8px 25px rgba(42, 229, 185, 0.2)',
-              border: '2px solid var(--euler-primary)'
-            }}>
-              <div style={{ fontSize: 14, color: 'var(--euler-text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Trading Volume</div>
-              <div style={{ fontSize: 28, fontWeight: 400, fontFamily: 'var(--font-headline)', color: 'var(--euler-primary)' }}>{cumulativeMetrics.tradingVolume?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '0'}</div>
-              <div style={{ fontSize: 12, color: 'var(--euler-text-secondary)', marginTop: 4, fontFamily: 'var(--font-body)' }}>Total volume traded</div>
-            </div>
+            {(() => {
+              // Helper function to get fee card colors based on value
+              const getFeeColors = (value: number, type: 'fee' | 'volume') => {
+                if (type === 'fee') {
+                  if (value >= 1000) return { primary: '#22c55e', secondary: '#16a34a', status: 'High Revenue' };
+                  if (value >= 100) return { primary: 'var(--euler-primary)', secondary: '#0891b2', status: 'Good Revenue' };
+                  if (value >= 10) return { primary: '#f59e0b', secondary: '#d97706', status: 'Moderate Revenue' };
+                  return { primary: '#ef4444', secondary: '#dc2626', status: 'Low Revenue' };
+                } else {
+                  if (value >= 100000) return { primary: '#22c55e', secondary: '#16a34a', status: 'High Volume' };
+                  if (value >= 10000) return { primary: 'var(--euler-primary)', secondary: '#0891b2', status: 'Good Volume' };
+                  if (value >= 1000) return { primary: '#f59e0b', secondary: '#d97706', status: 'Moderate Volume' };
+                  return { primary: '#ef4444', secondary: '#dc2626', status: 'Low Volume' };
+                }
+              };
+
+              const protocolFeeColors = getFeeColors(cumulativeMetrics.protocolFee || 0, 'fee');
+              const lpFeeColors = getFeeColors(cumulativeMetrics.lpFee || 0, 'fee');
+              const totalFeeColors = getFeeColors(cumulativeMetrics.totalFee || 0, 'fee');
+              const volumeColors = getFeeColors(cumulativeMetrics.tradingVolume || 0, 'volume');
+
+              const feeCards = [
+                {
+                  title: 'Protocol Fees',
+                  value: cumulativeMetrics.protocolFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '0',
+                  subtitle: protocolFeeColors.status,
+                  colors: protocolFeeColors
+                },
+                {
+                  title: 'LP Fees',
+                  value: cumulativeMetrics.lpFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '0',
+                  subtitle: lpFeeColors.status,
+                  colors: lpFeeColors
+                },
+                {
+                  title: 'Total Fees',
+                  value: cumulativeMetrics.totalFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '0',
+                  subtitle: totalFeeColors.status,
+                  colors: totalFeeColors
+                },
+                {
+                  title: 'Trading Volume',
+                  value: cumulativeMetrics.tradingVolume?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '0',
+                  subtitle: volumeColors.status,
+                  colors: volumeColors
+                }
+              ];
+
+              return feeCards.map((card, index) => (
+                <div 
+                  key={index}
+                  style={{ 
+                    background: 'var(--euler-dark-surface)', 
+                    borderRadius: 16, 
+                    padding: 24, 
+                    color: 'var(--euler-text-primary)',
+                    boxShadow: `0 8px 25px ${card.colors.primary}40, 0 4px 8px rgba(0,0,0,0.2)`,
+                    border: `2px solid ${card.colors.primary}`,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  {/* Status indicator bar */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 4,
+                    background: `linear-gradient(90deg, ${card.colors.primary}, ${card.colors.secondary})`,
+                    borderRadius: '16px 16px 0 0'
+                  }} />
+                  
+                  {/* Color gradient overlay */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    width: 60,
+                    height: 60,
+                    background: `linear-gradient(135deg, ${card.colors.primary}20, transparent)`,
+                    borderRadius: '0 16px 0 60px'
+                  }} />
+
+                  <div style={{ position: 'relative', zIndex: 1 }}>
+                    <div style={{ 
+                      fontSize: 14, 
+                      color: 'var(--euler-text-secondary)', 
+                      marginBottom: 8, 
+                      textTransform: 'uppercase', 
+                      letterSpacing: 1, 
+                      fontFamily: 'var(--font-body)', 
+                      fontWeight: 500 
+                    }}>
+                      {card.title}
+                    </div>
+                    <div style={{ 
+                      fontSize: 28, 
+                      fontWeight: 400, 
+                      fontFamily: 'var(--font-headline)', 
+                      color: card.colors.primary,
+                      marginBottom: 4
+                    }}>
+                      {card.value}
+                    </div>
+                    <div style={{ 
+                      fontSize: 12, 
+                      color: card.colors.secondary, 
+                      fontFamily: 'var(--font-body)',
+                      fontWeight: 500
+                    }}>
+                      {card.subtitle}
+                    </div>
+                  </div>
+                </div>
+              ));
+            })()}
           </div>
           {/* Enhanced Daily Metrics Table */}
           <div style={{ margin: '3rem 0' }}>

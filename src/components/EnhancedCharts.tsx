@@ -419,6 +419,39 @@ export const RiskAssessment: React.FC<{
   );
 };
 
+// Utility function to get colors based on metric type and value
+const getMetricColors = (type: string, value: number) => {
+  switch (type) {
+    case 'apy':
+      if (value >= 15) return { primary: '#22c55e', secondary: '#16a34a', status: 'Excellent' }; // Green - High yield
+      if (value >= 8) return { primary: 'var(--euler-primary)', secondary: '#0891b2', status: 'Good' }; // Teal - Good yield
+      if (value >= 3) return { primary: '#f59e0b', secondary: '#d97706', status: 'Average' }; // Yellow - Average yield
+      return { primary: '#ef4444', secondary: '#dc2626', status: 'Low' }; // Red - Low yield
+    
+    case 'tvl':
+      if (value >= 1000000) return { primary: '#22c55e', secondary: '#16a34a', status: 'High Liquidity' }; // Green - High TVL
+      if (value >= 100000) return { primary: 'var(--euler-primary)', secondary: '#0891b2', status: 'Good Liquidity' }; // Teal - Good TVL
+      if (value >= 10000) return { primary: '#f59e0b', secondary: '#d97706', status: 'Moderate Liquidity' }; // Yellow - Moderate TVL
+      return { primary: '#ef4444', secondary: '#dc2626', status: 'Low Liquidity' }; // Red - Low TVL
+    
+    case 'volume':
+      if (value >= 50000) return { primary: '#22c55e', secondary: '#16a34a', status: 'High Activity' }; // Green - High volume
+      if (value >= 10000) return { primary: 'var(--euler-primary)', secondary: '#0891b2', status: 'Active' }; // Teal - Good volume
+      if (value >= 1000) return { primary: '#f59e0b', secondary: '#d97706', status: 'Moderate Activity' }; // Yellow - Moderate volume
+      return { primary: '#ef4444', secondary: '#dc2626', status: 'Low Activity' }; // Red - Low volume
+    
+    case 'health':
+      if (value >= 80) return { primary: '#22c55e', secondary: '#16a34a', status: 'Excellent Health' }; // Green - Excellent health
+      if (value >= 60) return { primary: 'var(--euler-primary)', secondary: '#0891b2', status: 'Good Health' }; // Teal - Good health
+      if (value >= 40) return { primary: '#f59e0b', secondary: '#d97706', status: 'Moderate Risk' }; // Yellow - Moderate risk
+      if (value >= 20) return { primary: '#f97316', secondary: '#ea580c', status: 'High Risk' }; // Orange - High risk
+      return { primary: '#ef4444', secondary: '#dc2626', status: 'Critical Risk' }; // Red - Critical risk
+    
+    default:
+      return { primary: 'var(--euler-primary)', secondary: '#0891b2', status: 'Normal' };
+  }
+};
+
 // Enhanced Metrics Cards
 export const EnhancedMetricsCards: React.FC<{ 
   totalAPY: number;
@@ -428,34 +461,39 @@ export const EnhancedMetricsCards: React.FC<{
   volume24h: number;
   healthScore: number;
 }> = ({ totalAPY, swapFeeAPY, lendingYieldAPY, realTVL, volume24h, healthScore }) => {
+  const apyColors = getMetricColors('apy', totalAPY);
+  const tvlColors = getMetricColors('tvl', realTVL);
+  const volumeColors = getMetricColors('volume', volume24h);
+  const healthColors = getMetricColors('health', healthScore);
+
   const cards = [
     { 
       title: 'Total APY', 
       value: `${totalAPY.toFixed(2)}%`, 
       subtitle: `Swap: ${swapFeeAPY.toFixed(2)}% + Lending: ${lendingYieldAPY.toFixed(2)}%`,
-      color: 'var(--euler-primary)',
+      colors: apyColors,
       trend: totalAPY > 10 ? '↗' : totalAPY > 5 ? '→' : '↘'
     },
     { 
       title: 'Real TVL', 
       value: `$${realTVL.toLocaleString()}`, 
-      subtitle: 'Actual vault assets',
-      color: 'var(--euler-secondary)',
+      subtitle: `${tvlColors.status}`,
+      colors: tvlColors,
       trend: '→'
     },
     { 
       title: '24h Volume', 
       value: `$${volume24h.toLocaleString()}`, 
-      subtitle: 'Trading activity',
-      color: 'var(--euler-accent)',
+      subtitle: `${volumeColors.status}`,
+      colors: volumeColors,
       trend: '→'
     },
     { 
       title: 'Health Score', 
-      value: `${healthScore}/100`, 
-      subtitle: healthScore > 70 ? 'Healthy' : healthScore > 40 ? 'Moderate' : 'Risk',
-      color: healthScore > 70 ? 'var(--euler-primary)' : healthScore > 40 ? '#f59e0b' : '#ef4444',
-      trend: '→'
+      value: `${healthScore.toFixed(1)}/100`, 
+      subtitle: `${healthColors.status}`,
+      colors: healthColors,
+      trend: healthScore > 70 ? '↗' : healthScore > 40 ? '→' : '↘'
     }
   ];
 
@@ -468,20 +506,33 @@ export const EnhancedMetricsCards: React.FC<{
             padding: 24,
             borderRadius: 16,
             background: 'var(--euler-dark-surface)',
-            border: `2px solid ${card.color}`,
-            boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
+            border: `2px solid ${card.colors.primary}`,
+            boxShadow: `0 8px 20px ${card.colors.primary}40, 0 4px 8px rgba(0,0,0,0.2)`,
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            transition: 'all 0.3s ease'
           }}
         >
+          {/* Color gradient overlay */}
           <div style={{
             position: 'absolute',
             top: 0,
             right: 0,
             width: 80,
             height: 80,
-            background: `linear-gradient(135deg, ${card.color}15, transparent)`,
+            background: `linear-gradient(135deg, ${card.colors.primary}25, ${card.colors.secondary}15, transparent)`,
             borderRadius: '0 16px 0 80px'
+          }} />
+          
+          {/* Status indicator bar */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 4,
+            background: `linear-gradient(90deg, ${card.colors.primary}, ${card.colors.secondary})`,
+            borderRadius: '16px 16px 0 0'
           }} />
           
           <div style={{ position: 'relative', zIndex: 1 }}>
@@ -501,21 +552,26 @@ export const EnhancedMetricsCards: React.FC<{
               fontSize: 28, 
               fontWeight: 400, 
               fontFamily: 'var(--font-headline)',
-              color: card.color,
+              color: card.colors.primary,
               marginBottom: 8,
               display: 'flex',
               alignItems: 'center',
               gap: 12
             }}>
               {card.value}
-              <span style={{ fontSize: 20, color: 'var(--euler-text-secondary)' }}>{card.trend}</span>
+              <span style={{ 
+                fontSize: 20, 
+                color: card.colors.secondary,
+                filter: 'brightness(0.8)'
+              }}>{card.trend}</span>
             </div>
             
             <div style={{ 
               fontSize: 12, 
-              color: 'var(--euler-text-secondary)',
+              color: card.colors.secondary,
               lineHeight: 1.4,
-              fontFamily: 'var(--font-body)'
+              fontFamily: 'var(--font-body)',
+              fontWeight: 500
             }}>
               {card.subtitle}
             </div>
