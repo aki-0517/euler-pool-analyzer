@@ -77,8 +77,8 @@ export const FeeBreakdownChart: React.FC<{ data: any }> = ({ data }) => {
   }
 
   const pieData = [
-    { name: 'LP Fees', value: data.lpFee || 0, color: 'var(--euler-primary)' },
-    { name: 'Protocol Fees', value: data.protocolFee || 0, color: 'var(--euler-accent)' }
+    { name: 'LP Fees', value: data.lpFee || 0, color: '#2AE5B9' },
+    { name: 'Protocol Fees', value: data.protocolFee || 0, color: '#10263E' }
   ];
 
   return (
@@ -89,7 +89,7 @@ export const FeeBreakdownChart: React.FC<{ data: any }> = ({ data }) => {
           cx="50%"
           cy="50%"
           outerRadius={60}
-          fill="var(--euler-primary)"
+          fill="#2AE5B9"
           dataKey="value"
           label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(1)}%`}
         >

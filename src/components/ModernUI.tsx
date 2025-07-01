@@ -81,12 +81,13 @@ export const ProtocolOverview: React.FC<{
 }> = ({ network, poolCount, protocolFee, factoryAddress }) => {
   return (
     <div style={{
-      background: 'linear-gradient(135deg, var(--euler-primary) 0%, var(--euler-secondary) 100%)',
+      background: 'linear-gradient(135deg, var(--euler-secondary) 0%, var(--euler-dark-bg) 100%)',
       borderRadius: 16,
       padding: 24,
       color: '#fff',
       marginBottom: 24,
-      boxShadow: '0 10px 30px rgba(0, 212, 255, 0.3)'
+      boxShadow: '0 10px 30px rgba(42, 229, 185, 0.2)',
+      border: '1px solid var(--euler-primary)'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
         <img 
@@ -103,21 +104,21 @@ export const ProtocolOverview: React.FC<{
       </div>
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-        <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 12, padding: 16 }}>
-          <div style={{ fontSize: 14, opacity: 0.8, marginBottom: 4, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Total Pools</div>
-          <div style={{ fontSize: 24, fontWeight: 400, fontFamily: 'var(--font-headline)' }}>{poolCount.toLocaleString()}</div>
+        <div style={{ background: 'rgba(42, 229, 185, 0.15)', borderRadius: 12, padding: 16, border: '1px solid rgba(42, 229, 185, 0.3)' }}>
+          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', marginBottom: 4, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Total Pools</div>
+          <div style={{ fontSize: 24, fontWeight: 400, fontFamily: 'var(--font-headline)', color: '#fff' }}>{poolCount.toLocaleString()}</div>
         </div>
         
-        <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 12, padding: 16 }}>
-          <div style={{ fontSize: 14, opacity: 0.8, marginBottom: 4, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Protocol Fee</div>
-          <div style={{ fontSize: 24, fontWeight: 400, fontFamily: 'var(--font-headline)' }}>
+        <div style={{ background: 'rgba(42, 229, 185, 0.15)', borderRadius: 12, padding: 16, border: '1px solid rgba(42, 229, 185, 0.3)' }}>
+          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', marginBottom: 4, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Protocol Fee</div>
+          <div style={{ fontSize: 24, fontWeight: 400, fontFamily: 'var(--font-headline)', color: '#fff' }}>
             {formatPercentage(protocolFee ? parseFloat(protocolFee) * 100 : 0)}
           </div>
         </div>
         
-        <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 12, padding: 16 }}>
-          <div style={{ fontSize: 14, opacity: 0.8, marginBottom: 4, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Factory</div>
-          <div style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-body)' }}>
+        <div style={{ background: 'rgba(42, 229, 185, 0.15)', borderRadius: 12, padding: 16, border: '1px solid rgba(42, 229, 185, 0.3)' }}>
+          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', marginBottom: 4, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Factory</div>
+          <div style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-body)', color: '#fff' }}>
             {formatAddress(factoryAddress)}
           </div>
         </div>
@@ -398,19 +399,20 @@ export const PoolInfoHeader: React.FC<{
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, var(--euler-dark-surface) 0%, var(--euler-dark-bg) 100%)',
+      background: 'var(--euler-dark-surface)',
       borderRadius: 16,
       padding: 24,
-      color: '#fff',
+      color: 'var(--euler-text-primary)',
       marginBottom: 24,
-      boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+      border: '1px solid var(--euler-dark-border)'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
         <div style={{
           width: 60,
           height: 60,
           borderRadius: 12,
-          background: 'rgba(255,255,255,0.1)',
+          background: 'var(--euler-primary)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -425,17 +427,18 @@ export const PoolInfoHeader: React.FC<{
             fontSize: 24, 
             fontWeight: 400,
             fontFamily: 'var(--font-headline)',
+            color: 'var(--euler-text-primary)',
             display: 'flex',
             alignItems: 'center',
             gap: 8
           }}>
             <span>{asset0Info?.symbol || 'Token0'}</span>
-            <span style={{ opacity: 0.7 }}>•</span>
+            <span style={{ opacity: 0.7, color: 'var(--euler-text-secondary)' }}>•</span>
             <span>{asset1Info?.symbol || 'Token1'}</span>
           </h2>
           <p style={{ 
             margin: '4px 0 0 0', 
-            opacity: 0.8, 
+            color: 'var(--euler-text-secondary)', 
             fontSize: 14,
             fontFamily: 'var(--font-body)',
             fontWeight: 400
@@ -449,21 +452,22 @@ export const PoolInfoHeader: React.FC<{
         display: 'flex', 
         gap: 16, 
         flexWrap: 'wrap',
-        background: 'rgba(255,255,255,0.1)',
+        background: 'rgba(42, 229, 185, 0.1)',
         borderRadius: 12,
-        padding: 16
+        padding: 16,
+        border: '1px solid rgba(42, 229, 185, 0.2)'
       }}>
         <div>
-          <div style={{ fontSize: 12, opacity: 0.8, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Pool Status</div>
-          <div style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-body)' }}>
+          <div style={{ fontSize: 12, color: 'var(--euler-text-secondary)', fontFamily: 'var(--font-body)', fontWeight: 500 }}>Pool Status</div>
+          <div style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)' }}>
             {poolDetail.status === 1 ? '🟢 Active' : 
              poolDetail.status === 2 ? '🟡 Locked' : '🔴 Inactive'}
           </div>
         </div>
         
         <div>
-          <div style={{ fontSize: 12, opacity: 0.8, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Current Reserves</div>
-          <div style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-body)' }}>
+          <div style={{ fontSize: 12, color: 'var(--euler-text-secondary)', fontFamily: 'var(--font-body)', fontWeight: 500 }}>Current Reserves</div>
+          <div style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)' }}>
             {formatTokenAmount(poolDetail.reserve0, 18, asset0Info?.symbol, { compact: true })} • {' '}
             {formatTokenAmount(poolDetail.reserve1, 18, asset1Info?.symbol, { compact: true })}
           </div>
