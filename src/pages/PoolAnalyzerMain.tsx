@@ -97,10 +97,11 @@ const PoolAnalyzerMain: React.FC<PoolAnalyzerMainProps> = ({
         <section style={{ 
           marginTop: '2rem', 
           textAlign: 'left', 
-          background: '#fff', 
+          background: 'var(--euler-dark-surface)', 
           borderRadius: 16, 
-          boxShadow: '0 8px 32px rgba(0,0,0,0.1)', 
-          padding: '2.5rem'
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)', 
+          padding: '2.5rem',
+          border: '1px solid var(--euler-dark-border)'
         }}>
           <PoolStatsCards />
           
@@ -147,64 +148,69 @@ const PoolAnalyzerMain: React.FC<PoolAnalyzerMainProps> = ({
           {/* Enhanced Key Metrics Cards */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 20, margin: '2rem 0' }}>
             <div style={{ 
-              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+              background: 'var(--euler-dark-surface)', 
               borderRadius: 16, 
               padding: 24, 
-              color: '#fff',
-              boxShadow: '0 8px 25px rgba(16, 185, 129, 0.25)'
+              color: 'var(--euler-text-primary)',
+              boxShadow: '0 8px 25px rgba(42, 229, 185, 0.2)',
+              border: '2px solid var(--euler-primary)'
             }}>
-              <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Protocol Fees</div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>{cumulativeMetrics.protocolFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '-'}</div>
-              <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>Cumulative earnings</div>
+              <div style={{ fontSize: 14, color: 'var(--euler-text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Protocol Fees</div>
+              <div style={{ fontSize: 28, fontWeight: 400, fontFamily: 'var(--font-headline)', color: 'var(--euler-primary)' }}>{cumulativeMetrics.protocolFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '0'}</div>
+              <div style={{ fontSize: 12, color: 'var(--euler-text-secondary)', marginTop: 4, fontFamily: 'var(--font-body)' }}>Cumulative earnings</div>
             </div>
             <div style={{ 
-              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)', 
+              background: 'var(--euler-dark-surface)', 
               borderRadius: 16, 
               padding: 24, 
-              color: '#fff',
-              boxShadow: '0 8px 25px rgba(59, 130, 246, 0.25)'
+              color: 'var(--euler-text-primary)',
+              boxShadow: '0 8px 25px rgba(42, 229, 185, 0.2)',
+              border: '2px solid var(--euler-accent)'
             }}>
-              <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>LP Fees</div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>{cumulativeMetrics.lpFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '-'}</div>
-              <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>Liquidity provider rewards</div>
+              <div style={{ fontSize: 14, color: 'var(--euler-text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'var(--font-body)', fontWeight: 500 }}>LP Fees</div>
+              <div style={{ fontSize: 28, fontWeight: 400, fontFamily: 'var(--font-headline)', color: 'var(--euler-accent)' }}>{cumulativeMetrics.lpFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '0'}</div>
+              <div style={{ fontSize: 12, color: 'var(--euler-text-secondary)', marginTop: 4, fontFamily: 'var(--font-body)' }}>Liquidity provider rewards</div>
             </div>
             <div style={{ 
-              background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)', 
+              background: 'var(--euler-dark-surface)', 
               borderRadius: 16, 
               padding: 24, 
-              color: '#fff',
-              boxShadow: '0 8px 25px rgba(139, 92, 246, 0.25)'
+              color: 'var(--euler-text-primary)',
+              boxShadow: '0 8px 25px rgba(42, 229, 185, 0.2)',
+              border: '2px solid var(--euler-secondary)'
             }}>
-              <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Total Fees</div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>{cumulativeMetrics.totalFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '-'}</div>
-              <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>Combined fee revenue</div>
+              <div style={{ fontSize: 14, color: 'var(--euler-text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Total Fees</div>
+              <div style={{ fontSize: 28, fontWeight: 400, fontFamily: 'var(--font-headline)', color: 'var(--euler-secondary)' }}>{cumulativeMetrics.totalFee?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '0'}</div>
+              <div style={{ fontSize: 12, color: 'var(--euler-text-secondary)', marginTop: 4, fontFamily: 'var(--font-body)' }}>Combined fee revenue</div>
             </div>
             <div style={{ 
-              background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', 
+              background: 'var(--euler-dark-surface)', 
               borderRadius: 16, 
               padding: 24, 
-              color: '#fff',
-              boxShadow: '0 8px 25px rgba(245, 158, 11, 0.25)'
+              color: 'var(--euler-text-primary)',
+              boxShadow: '0 8px 25px rgba(42, 229, 185, 0.2)',
+              border: '2px solid var(--euler-primary)'
             }}>
-              <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Trading Volume</div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>{cumulativeMetrics.tradingVolume?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '-'}</div>
-              <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>Total volume traded</div>
+              <div style={{ fontSize: 14, color: 'var(--euler-text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Trading Volume</div>
+              <div style={{ fontSize: 28, fontWeight: 400, fontFamily: 'var(--font-headline)', color: 'var(--euler-primary)' }}>{cumulativeMetrics.tradingVolume?.toLocaleString(undefined, { maximumFractionDigits: 6 }) || '0'}</div>
+              <div style={{ fontSize: 12, color: 'var(--euler-text-secondary)', marginTop: 4, fontFamily: 'var(--font-body)' }}>Total volume traded</div>
             </div>
           </div>
           {/* Enhanced Daily Metrics Table */}
           <div style={{ margin: '3rem 0' }}>
             <h3 style={{ 
               fontSize: 20, 
-              fontWeight: 600, 
-              color: '#1f2937', 
+              fontWeight: 400, 
+              fontFamily: 'var(--font-headline)',
+              color: 'var(--euler-text-primary)', 
               marginBottom: 16
             }}>Daily Performance Breakdown</h3>
             <div style={{ 
-              background: '#fff', 
+              background: 'var(--euler-dark-surface)', 
               borderRadius: 16, 
               overflow: 'hidden',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-              border: '1px solid #e5e7eb'
+              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              border: '1px solid var(--euler-dark-border)'
             }}>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ 
@@ -213,27 +219,27 @@ const PoolAnalyzerMain: React.FC<PoolAnalyzerMainProps> = ({
                   borderCollapse: 'collapse'
                 }}>
                   <thead>
-                    <tr style={{ background: '#f8fafc' }}>
-                      <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Date (UTC)</th>
-                      <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Protocol Fees</th>
-                      <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>LP Fees</th>
-                      <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Total Fees</th>
-                      <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Trading Volume</th>
-                      <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Swaps</th>
+                    <tr style={{ background: 'var(--euler-dark-bg)' }}>
+                      <th style={{ padding: '16px 20px', textAlign: 'left', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)', borderBottom: '2px solid var(--euler-dark-border)' }}>Date (UTC)</th>
+                      <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)', borderBottom: '2px solid var(--euler-dark-border)' }}>Protocol Fees</th>
+                      <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)', borderBottom: '2px solid var(--euler-dark-border)' }}>LP Fees</th>
+                      <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)', borderBottom: '2px solid var(--euler-dark-border)' }}>Total Fees</th>
+                      <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)', borderBottom: '2px solid var(--euler-dark-border)' }}>Trading Volume</th>
+                      <th style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)', borderBottom: '2px solid var(--euler-dark-border)' }}>Swaps</th>
                     </tr>
                   </thead>
                   <tbody>
                     {dailyMetrics.map((row: any, index: number) => (
                       <tr key={row.day} style={{ 
-                        background: index % 2 === 0 ? '#fff' : '#f9fafb',
-                        borderBottom: '1px solid #f1f5f9'
+                        background: index % 2 === 0 ? 'var(--euler-dark-surface)' : 'var(--euler-dark-bg)',
+                        borderBottom: '1px solid var(--euler-dark-border)'
                       }}>
-                        <td style={{ padding: '16px 20px', fontWeight: 500, color: '#1f2937' }}>{row.day}</td>
-                        <td style={{ padding: '16px 20px', textAlign: 'right', fontFamily: 'monospace', color: '#059669' }}>{row.protocolFee.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
-                        <td style={{ padding: '16px 20px', textAlign: 'right', fontFamily: 'monospace', color: '#3b82f6' }}>{row.lpFee.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
-                        <td style={{ padding: '16px 20px', textAlign: 'right', fontFamily: 'monospace', color: '#7c3aed' }}>{row.totalFee.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
-                        <td style={{ padding: '16px 20px', textAlign: 'right', fontFamily: 'monospace', color: '#d97706' }}>{row.tradingVolume.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
-                        <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 600, color: '#6b7280' }}>{row.swapCount}</td>
+                        <td style={{ padding: '16px 20px', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)' }}>{row.day}</td>
+                        <td style={{ padding: '16px 20px', textAlign: 'right', fontFamily: 'var(--font-body)', color: 'var(--euler-primary)' }}>{row.protocolFee.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+                        <td style={{ padding: '16px 20px', textAlign: 'right', fontFamily: 'var(--font-body)', color: 'var(--euler-accent)' }}>{row.lpFee.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+                        <td style={{ padding: '16px 20px', textAlign: 'right', fontFamily: 'var(--font-body)', color: 'var(--euler-secondary)' }}>{row.totalFee.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+                        <td style={{ padding: '16px 20px', textAlign: 'right', fontFamily: 'var(--font-body)', color: 'var(--euler-primary)' }}>{row.tradingVolume.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+                        <td style={{ padding: '16px 20px', textAlign: 'right', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-secondary)' }}>{row.swapCount}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -245,28 +251,31 @@ const PoolAnalyzerMain: React.FC<PoolAnalyzerMainProps> = ({
           <div style={{ margin: '3rem 0' }}>
             <h3 style={{ 
               fontSize: 24, 
-              fontWeight: 700, 
-              color: '#1f2937', 
+              fontWeight: 400, 
+              fontFamily: 'var(--font-headline)',
+              color: 'var(--euler-text-primary)', 
               marginBottom: 24,
               textAlign: 'center'
             }}>Analytics & Performance Charts</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: 30 }}>
               <div style={{ 
-                background: '#f8fafc', 
+                background: 'var(--euler-dark-surface)', 
                 borderRadius: 16, 
                 padding: 24,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+                boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+                border: '1px solid var(--euler-dark-border)'
               }}>
-                <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: '#374151' }}>Volume Trends</h4>
+                <h4 style={{ fontSize: 18, fontWeight: 400, fontFamily: 'var(--font-headline)', marginBottom: 16, color: 'var(--euler-text-primary)' }}>Volume Trends</h4>
                 <VolumeChart data={dailyMetrics} />
               </div>
               <div style={{ 
-                background: '#f8fafc', 
+                background: 'var(--euler-dark-surface)', 
                 borderRadius: 16, 
                 padding: 24,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+                boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+                border: '1px solid var(--euler-dark-border)'
               }}>
-                <h4 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: '#374151' }}>Fee Breakdown</h4>
+                <h4 style={{ fontSize: 18, fontWeight: 400, fontFamily: 'var(--font-headline)', marginBottom: 16, color: 'var(--euler-text-primary)' }}>Fee Breakdown</h4>
                 <FeeBreakdownChart data={cumulativeMetrics} />
               </div>
             </div>
@@ -276,15 +285,17 @@ const PoolAnalyzerMain: React.FC<PoolAnalyzerMainProps> = ({
           <div style={{ margin: '3rem 0' }}>
             <h3 style={{ 
               fontSize: 20, 
-              fontWeight: 600, 
-              color: '#1f2937', 
+              fontWeight: 400, 
+              fontFamily: 'var(--font-headline)',
+              color: 'var(--euler-text-primary)', 
               marginBottom: 16
             }}>Price History Analysis</h3>
             <div style={{ 
-              background: '#f8fafc', 
+              background: 'var(--euler-dark-surface)', 
               borderRadius: 16, 
               padding: 24,
-              boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              border: '1px solid var(--euler-dark-border)'
             }}>
               <PriceHistoryChart />
             </div>
@@ -299,27 +310,29 @@ const PoolAnalyzerMain: React.FC<PoolAnalyzerMainProps> = ({
             }}>
               <h3 style={{ 
                 fontSize: 20, 
-                fontWeight: 600, 
-                color: '#1f2937', 
+                fontWeight: 400, 
+                fontFamily: 'var(--font-headline)',
+                color: 'var(--euler-text-primary)', 
                 margin: 0
               }}>Recent Transaction History</h3>
               <div style={{ 
-                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                color: '#fff',
+                background: 'var(--euler-primary)',
+                color: 'var(--euler-dark-bg)',
                 padding: '8px 16px',
                 borderRadius: 8,
                 fontSize: 14,
-                fontWeight: 600
+                fontWeight: 500,
+                fontFamily: 'var(--font-body)'
               }}>
                 Volume: {swapVolume.toLocaleString()}
               </div>
             </div>
             <div style={{ 
-              background: '#fff', 
+              background: 'var(--euler-dark-surface)', 
               borderRadius: 16, 
               overflow: 'hidden',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-              border: '1px solid #e5e7eb'
+              boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+              border: '1px solid var(--euler-dark-border)'
             }}>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ 
@@ -328,16 +341,16 @@ const PoolAnalyzerMain: React.FC<PoolAnalyzerMainProps> = ({
                   borderCollapse: 'collapse'
                 }}>
                   <thead>
-                    <tr style={{ background: '#f8fafc' }}>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Sender</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Amount0 In</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Amount1 In</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Amount0 Out</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Amount1 Out</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Reserve0</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Reserve1</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>To</th>
-                      <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 600, color: '#374151', borderBottom: '2px solid #e5e7eb' }}>Block</th>
+                    <tr style={{ background: 'var(--euler-dark-bg)' }}>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)', borderBottom: '2px solid var(--euler-dark-border)' }}>Sender</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)', borderBottom: '2px solid var(--euler-dark-border)' }}>Amount0 In</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)', borderBottom: '2px solid var(--euler-dark-border)' }}>Amount1 In</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)', borderBottom: '2px solid var(--euler-dark-border)' }}>Amount0 Out</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)', borderBottom: '2px solid var(--euler-dark-border)' }}>Amount1 Out</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)', borderBottom: '2px solid var(--euler-dark-border)' }}>Reserve0</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)', borderBottom: '2px solid var(--euler-dark-border)' }}>Reserve1</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)', borderBottom: '2px solid var(--euler-dark-border)' }}>To</th>
+                      <th style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)', borderBottom: '2px solid var(--euler-dark-border)' }}>Block</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -345,18 +358,18 @@ const PoolAnalyzerMain: React.FC<PoolAnalyzerMainProps> = ({
                       const args = log.args || {};
                       return (
                         <tr key={index} style={{ 
-                          background: index % 2 === 0 ? '#fff' : '#f9fafb',
-                          borderBottom: '1px solid #f1f5f9'
+                          background: index % 2 === 0 ? 'var(--euler-dark-surface)' : 'var(--euler-dark-bg)',
+                          borderBottom: '1px solid var(--euler-dark-border)'
                         }}>
-                          <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: 11, color: '#6b7280' }}>{args.sender?.slice(0, 10)}...</td>
-                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: '#1f2937' }}>{args.amount0In}</td>
-                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: '#1f2937' }}>{args.amount1In}</td>
-                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: '#1f2937' }}>{args.amount0Out}</td>
-                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: '#1f2937' }}>{args.amount1Out}</td>
-                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: '#6b7280' }}>{args.reserve0}</td>
-                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'monospace', color: '#6b7280' }}>{args.reserve1}</td>
-                          <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: 11, color: '#6b7280' }}>{args.to?.slice(0, 10)}...</td>
-                          <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 500, color: '#1f2937' }}>{log.blockNumber}</td>
+                          <td style={{ padding: '12px 16px', fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--euler-text-secondary)' }}>{args.sender?.slice(0, 10)}...</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)' }}>{args.amount0In}</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)' }}>{args.amount1In}</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)' }}>{args.amount0Out}</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)' }}>{args.amount1Out}</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'var(--font-body)', color: 'var(--euler-text-secondary)' }}>{args.reserve0}</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right', fontFamily: 'var(--font-body)', color: 'var(--euler-text-secondary)' }}>{args.reserve1}</td>
+                          <td style={{ padding: '12px 16px', fontFamily: 'var(--font-body)', fontSize: 11, color: 'var(--euler-text-secondary)' }}>{args.to?.slice(0, 10)}...</td>
+                          <td style={{ padding: '12px 16px', textAlign: 'center', fontWeight: 500, fontFamily: 'var(--font-body)', color: 'var(--euler-text-primary)' }}>{log.blockNumber}</td>
                         </tr>
                       );
                     })}
