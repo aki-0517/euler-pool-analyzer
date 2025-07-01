@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatNumber, formatTokenAmount, formatUSD, formatPercentage, formatAddress, getChainIcon, sanitizeDisplayValue } from '../utils/formatting';
+import eulerLogo from '../assets/euler-logo-color-white.svg';
 
 // Modern Network Selector
 export const NetworkSelector: React.FC<{
@@ -13,7 +14,7 @@ export const NetworkSelector: React.FC<{
         display: 'block', 
         fontSize: 12, 
         fontWeight: 600, 
-        color: '#6b7280', 
+        color: 'var(--euler-text-secondary)', 
         marginBottom: 8,
         textTransform: 'uppercase',
         letterSpacing: 1
@@ -31,8 +32,9 @@ export const NetworkSelector: React.FC<{
               gap: 8,
               padding: '8px 12px',
               borderRadius: 8,
-              border: selectedNetwork === network.key ? '2px solid #3b82f6' : '2px solid #e5e7eb',
-              background: selectedNetwork === network.key ? '#eff6ff' : '#fff',
+              border: selectedNetwork === network.key ? '2px solid var(--euler-primary)' : '2px solid var(--euler-dark-border)',
+              background: selectedNetwork === network.key ? 'rgba(0, 212, 255, 0.1)' : 'var(--euler-dark-surface)',
+              color: 'var(--euler-text-primary)',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
               fontSize: 14,
@@ -40,14 +42,14 @@ export const NetworkSelector: React.FC<{
             }}
             onMouseEnter={(e) => {
               if (selectedNetwork !== network.key) {
-                e.currentTarget.style.borderColor = '#d1d5db';
-                e.currentTarget.style.background = '#f9fafb';
+                e.currentTarget.style.borderColor = 'var(--euler-primary)';
+                e.currentTarget.style.background = 'rgba(0, 212, 255, 0.05)';
               }
             }}
             onMouseLeave={(e) => {
               if (selectedNetwork !== network.key) {
-                e.currentTarget.style.borderColor = '#e5e7eb';
-                e.currentTarget.style.background = '#fff';
+                e.currentTarget.style.borderColor = 'var(--euler-dark-border)';
+                e.currentTarget.style.background = 'var(--euler-dark-surface)';
               }
             }}
           >
@@ -79,43 +81,43 @@ export const ProtocolOverview: React.FC<{
 }> = ({ network, poolCount, protocolFee, factoryAddress }) => {
   return (
     <div style={{
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, var(--euler-primary) 0%, var(--euler-secondary) 100%)',
       borderRadius: 16,
       padding: 24,
       color: '#fff',
       marginBottom: 24,
-      boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)',
+      boxShadow: '0 10px 30px rgba(0, 212, 255, 0.3)'
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
         <img 
-          src={getChainIcon(network.key)} 
-          alt={network.name}
+          src={eulerLogo} 
+          alt="Euler"
           width={48}
           height={48}
-          style={{ borderRadius: 8, background: 'rgba(255,255,255,0.2)', padding: 4 }}
+          style={{ borderRadius: 8, background: 'rgba(255,255,255,0.1)', padding: 8 }}
         />
         <div>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700 }}>EulerSwap Analytics</h1>
-          <p style={{ margin: '4px 0 0 0', opacity: 0.9, fontSize: 16 }}>{network.name}</p>
+          <h1 style={{ margin: 0, fontSize: 36, fontWeight: 400, fontFamily: 'var(--font-headline)' }}>EulerSwap Analytics</h1>
+          <p style={{ margin: '4px 0 0 0', opacity: 0.9, fontSize: 16, fontFamily: 'var(--font-body)' }}>{network.name}</p>
         </div>
       </div>
       
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
         <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 12, padding: 16 }}>
-          <div style={{ fontSize: 14, opacity: 0.8, marginBottom: 4 }}>Total Pools</div>
-          <div style={{ fontSize: 24, fontWeight: 700 }}>{poolCount.toLocaleString()}</div>
+          <div style={{ fontSize: 14, opacity: 0.8, marginBottom: 4, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Total Pools</div>
+          <div style={{ fontSize: 24, fontWeight: 400, fontFamily: 'var(--font-headline)' }}>{poolCount.toLocaleString()}</div>
         </div>
         
         <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 12, padding: 16 }}>
-          <div style={{ fontSize: 14, opacity: 0.8, marginBottom: 4 }}>Protocol Fee</div>
-          <div style={{ fontSize: 24, fontWeight: 700 }}>
+          <div style={{ fontSize: 14, opacity: 0.8, marginBottom: 4, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Protocol Fee</div>
+          <div style={{ fontSize: 24, fontWeight: 400, fontFamily: 'var(--font-headline)' }}>
             {formatPercentage(protocolFee ? parseFloat(protocolFee) * 100 : 0)}
           </div>
         </div>
         
         <div style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 12, padding: 16 }}>
-          <div style={{ fontSize: 14, opacity: 0.8, marginBottom: 4 }}>Factory</div>
-          <div style={{ fontSize: 16, fontWeight: 600, fontFamily: 'monospace' }}>
+          <div style={{ fontSize: 14, opacity: 0.8, marginBottom: 4, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Factory</div>
+          <div style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-body)' }}>
             {formatAddress(factoryAddress)}
           </div>
         </div>
@@ -134,22 +136,22 @@ export const PoolSelectionGrid: React.FC<{
   if (loading) {
     return (
       <div style={{ 
-        background: '#f8fafc', 
+        background: 'var(--euler-dark-surface)', 
         borderRadius: 12, 
         padding: 40, 
         textAlign: 'center',
-        border: '2px dashed #cbd5e1'
+        border: '2px dashed var(--euler-dark-border)'
       }}>
         <div style={{ 
           width: 40, 
           height: 40, 
-          border: '3px solid #e2e8f0', 
-          borderTop: '3px solid #3b82f6',
+          border: '3px solid var(--euler-dark-border)', 
+          borderTop: '3px solid var(--euler-primary)',
           borderRadius: '50%',
           animation: 'spin 1s linear infinite',
           margin: '0 auto 16px'
         }} />
-        <div style={{ color: '#64748b', fontSize: 16 }}>Loading pools...</div>
+        <div style={{ color: 'var(--euler-text-secondary)', fontSize: 16 }}>Loading pools...</div>
       </div>
     );
   }
@@ -157,14 +159,14 @@ export const PoolSelectionGrid: React.FC<{
   if (pools.length === 0) {
     return (
       <div style={{ 
-        background: '#f8fafc', 
+        background: 'var(--euler-dark-surface)', 
         borderRadius: 12, 
         padding: 40, 
         textAlign: 'center',
-        border: '2px dashed #cbd5e1'
+        border: '2px dashed var(--euler-dark-border)'
       }}>
         <div style={{ fontSize: 48, marginBottom: 16 }}>🏊‍♂️</div>
-        <div style={{ color: '#64748b', fontSize: 16 }}>No pools available on this network</div>
+        <div style={{ color: 'var(--euler-text-secondary)', fontSize: 16 }}>No pools available on this network</div>
       </div>
     );
   }
@@ -173,9 +175,10 @@ export const PoolSelectionGrid: React.FC<{
     <div>
       <h3 style={{ 
         margin: '0 0 16px 0', 
-        color: '#1f2937', 
+        color: 'var(--euler-text-primary)', 
         fontSize: 18, 
-        fontWeight: 600 
+        fontWeight: 400,
+        fontFamily: 'var(--font-headline)'
       }}>
         Select Pool ({pools.length} available)
       </h3>
@@ -193,32 +196,33 @@ export const PoolSelectionGrid: React.FC<{
             key={address}
             onClick={() => onPoolSelect(address)}
             style={{
-              background: selectedPool === address ? '#eff6ff' : '#fff',
-              border: selectedPool === address ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+              background: selectedPool === address ? 'rgba(0, 212, 255, 0.1)' : 'var(--euler-dark-surface)',
+              border: selectedPool === address ? '2px solid var(--euler-primary)' : '1px solid var(--euler-dark-border)',
+              color: 'var(--euler-text-primary)',
               borderRadius: 8,
               padding: 12,
               textAlign: 'left',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
-              boxShadow: selectedPool === address ? '0 2px 8px rgba(59, 130, 246, 0.15)' : '0 1px 2px rgba(0,0,0,0.05)',
+              boxShadow: selectedPool === address ? '0 2px 8px rgba(0, 212, 255, 0.15)' : '0 1px 2px rgba(0,0,0,0.2)',
               width: '100%'
             }}
             onMouseEnter={(e) => {
               if (selectedPool !== address) {
-                e.currentTarget.style.borderColor = '#d1d5db';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                e.currentTarget.style.borderColor = 'var(--euler-primary)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,212,255,0.2)';
               }
             }}
             onMouseLeave={(e) => {
               if (selectedPool !== address) {
-                e.currentTarget.style.borderColor = '#e5e7eb';
-                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                e.currentTarget.style.borderColor = 'var(--euler-dark-border)';
+                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.2)';
               }
             }}
           >
             <div style={{ 
               fontSize: 12, 
-              color: '#6b7280', 
+              color: 'var(--euler-text-secondary)', 
               marginBottom: 4,
               fontWeight: 600
             }}>
@@ -226,7 +230,7 @@ export const PoolSelectionGrid: React.FC<{
             </div>
             <div style={{ 
               fontSize: 14, 
-              color: '#1f2937', 
+              color: 'var(--euler-text-primary)', 
               fontFamily: 'monospace',
               fontWeight: 500,
               wordBreak: 'break-all'
@@ -236,7 +240,7 @@ export const PoolSelectionGrid: React.FC<{
             {selectedPool === address && (
               <div style={{
                 fontSize: 11,
-                color: '#3b82f6',
+                color: 'var(--euler-primary)',
                 marginTop: 4,
                 fontWeight: 600
               }}>
@@ -315,10 +319,11 @@ export const MetricsGrid: React.FC<{
           <div 
             key={index}
             style={{
-              background: '#fff',
+              background: 'var(--euler-dark-surface)',
               borderRadius: 12,
               padding: 20,
-              border: `2px solid ${metric.color || '#e5e7eb'}`,
+              border: `2px solid ${metric.color || 'var(--euler-dark-border)'}`,
+              color: 'var(--euler-text-primary)',
               boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
               position: 'relative',
               overflow: 'hidden',
@@ -331,14 +336,14 @@ export const MetricsGrid: React.FC<{
               right: 0,
               width: 60,
               height: 60,
-              background: `linear-gradient(135deg, ${metric.color || '#e5e7eb'}20, transparent)`,
+              background: `linear-gradient(135deg, ${metric.color || 'var(--euler-dark-border)'}20, transparent)`,
               borderRadius: '0 12px 0 60px',
             }} />
             
             <div style={{ position: 'relative', zIndex: 1 }}>
               <div style={{ 
                 fontSize: 12, 
-                color: '#6b7280', 
+                color: 'var(--euler-text-secondary)', 
                 textTransform: 'uppercase', 
                 letterSpacing: 1,
                 fontWeight: 600,
@@ -358,7 +363,7 @@ export const MetricsGrid: React.FC<{
               <div style={{ 
                 fontSize: 22, 
                 fontWeight: 700, 
-                color: metric.color || '#1f2937',
+                color: metric.color || 'var(--euler-text-primary)',
                 marginBottom: 4,
                 wordBreak: 'break-word'
               }}>
@@ -368,7 +373,7 @@ export const MetricsGrid: React.FC<{
               {metric.subtitle && (
                 <div style={{ 
                   fontSize: 11, 
-                  color: '#9ca3af',
+                  color: 'var(--euler-text-secondary)',
                   lineHeight: 1.3
                 }}>
                   {metric.subtitle}
@@ -393,12 +398,12 @@ export const PoolInfoHeader: React.FC<{
 
   return (
     <div style={{
-      background: 'linear-gradient(135deg, #1f2937 0%, #374151 100%)',
+      background: 'linear-gradient(135deg, var(--euler-dark-surface) 0%, var(--euler-dark-bg) 100%)',
       borderRadius: 16,
       padding: 24,
       color: '#fff',
       marginBottom: 24,
-      boxShadow: '0 10px 30px rgba(31, 41, 55, 0.3)',
+      boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
         <div style={{
@@ -418,7 +423,8 @@ export const PoolInfoHeader: React.FC<{
           <h2 style={{ 
             margin: 0, 
             fontSize: 24, 
-            fontWeight: 700,
+            fontWeight: 400,
+            fontFamily: 'var(--font-headline)',
             display: 'flex',
             alignItems: 'center',
             gap: 8
@@ -431,7 +437,8 @@ export const PoolInfoHeader: React.FC<{
             margin: '4px 0 0 0', 
             opacity: 0.8, 
             fontSize: 14,
-            fontFamily: 'monospace'
+            fontFamily: 'var(--font-body)',
+            fontWeight: 400
           }}>
             {formatAddress(poolAddress)}
           </p>
@@ -447,16 +454,16 @@ export const PoolInfoHeader: React.FC<{
         padding: 16
       }}>
         <div>
-          <div style={{ fontSize: 12, opacity: 0.8 }}>Pool Status</div>
-          <div style={{ fontSize: 16, fontWeight: 600 }}>
+          <div style={{ fontSize: 12, opacity: 0.8, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Pool Status</div>
+          <div style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-body)' }}>
             {poolDetail.status === 1 ? '🟢 Active' : 
              poolDetail.status === 2 ? '🟡 Locked' : '🔴 Inactive'}
           </div>
         </div>
         
         <div>
-          <div style={{ fontSize: 12, opacity: 0.8 }}>Current Reserves</div>
-          <div style={{ fontSize: 16, fontWeight: 600 }}>
+          <div style={{ fontSize: 12, opacity: 0.8, fontFamily: 'var(--font-body)', fontWeight: 500 }}>Current Reserves</div>
+          <div style={{ fontSize: 16, fontWeight: 500, fontFamily: 'var(--font-body)' }}>
             {formatTokenAmount(poolDetail.reserve0, 18, asset0Info?.symbol, { compact: true })} • {' '}
             {formatTokenAmount(poolDetail.reserve1, 18, asset1Info?.symbol, { compact: true })}
           </div>
@@ -480,12 +487,10 @@ export const GlobalStyles: React.FC = () => (
       }
       
       body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-          sans-serif;
+        font-family: var(--font-body);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        background: #f1f5f9;
+        background: var(--euler-dark-bg);
       }
       
       button {

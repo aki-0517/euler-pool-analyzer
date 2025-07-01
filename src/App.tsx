@@ -712,15 +712,16 @@ function App() {
   return (
     <>
       <GlobalStyles />
-      <div style={{ minHeight: '100vh', background: '#f1f5f9', display: 'flex' }}>
+      <div style={{ minHeight: '100vh', background: 'var(--euler-dark-bg)', display: 'flex' }}>
         {/* Side Menu */}
         <div style={{ 
           width: sideMenuOpen ? 400 : 60, 
-          background: '#fff', 
-          boxShadow: '2px 0 10px rgba(0,0,0,0.1)',
+          background: 'var(--euler-dark-surface)', 
+          boxShadow: '2px 0 10px rgba(0,0,0,0.3)',
           transition: 'width 0.3s ease',
           position: 'relative',
-          zIndex: 100
+          zIndex: 100,
+          borderRight: '1px solid var(--euler-dark-border)'
         }}>
           {/* Toggle Button */}
           <button 
@@ -732,15 +733,15 @@ function App() {
               width: 30,
               height: 30,
               borderRadius: '50%',
-              background: '#3b82f6',
-              color: '#fff',
+              background: 'var(--euler-primary)',
+              color: 'var(--euler-dark-bg)',
               border: 'none',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: 16,
-              boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)'
+              boxShadow: '0 2px 8px rgba(0, 212, 255, 0.3)'
             }}
           >
             {sideMenuOpen ? '‹' : '›'}
@@ -763,7 +764,7 @@ function App() {
                   display: 'block', 
                   fontSize: 12, 
                   fontWeight: 600, 
-                  color: '#6b7280', 
+                  color: 'var(--euler-text-secondary)', 
                   marginBottom: 8,
                   textTransform: 'uppercase',
                   letterSpacing: 1
@@ -778,14 +779,16 @@ function App() {
                   style={{
                     width: '100%',
                     padding: '8px 12px',
-                    border: '1px solid #e5e7eb',
+                    border: '1px solid var(--euler-dark-border)',
                     borderRadius: 8,
                     fontSize: 14,
                     outline: 'none',
-                    transition: 'border-color 0.2s ease'
+                    transition: 'border-color 0.2s ease',
+                    background: 'var(--euler-dark-bg)',
+                    color: 'var(--euler-text-primary)'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
-                  onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                  onFocus={(e) => e.target.style.borderColor = 'var(--euler-primary)'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--euler-dark-border)'}
                 />
               </div>
 
@@ -814,41 +817,43 @@ function App() {
           {/* Pool Analysis - Now takes full width and is more prominent */}
           {poolDataLoading ? (
             <div style={{ 
-              background: '#fff', 
+              background: 'var(--euler-dark-surface)', 
               borderRadius: 16, 
               padding: 64, 
               textAlign: 'center',
-              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
               minHeight: 400,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              border: '1px solid var(--euler-dark-border)'
             }}>
               <div style={{
                 width: 60,
                 height: 60,
-                border: '6px solid #e0e7ff',
-                borderTop: '6px solid #3b82f6',
+                border: '6px solid var(--euler-dark-border)',
+                borderTop: '6px solid var(--euler-primary)',
                 borderRadius: '50%',
                 animation: 'spin 1.5s linear infinite',
                 marginBottom: 24
               }} />
-              <h2 style={{ color: '#3b82f6', margin: 0, fontSize: 24, fontWeight: 600 }}>Loading Pool Analytics...</h2>
-              <p style={{ color: '#6b7280', marginTop: 8, fontSize: 16 }}>Please wait a moment</p>
+              <h2 style={{ color: 'var(--euler-primary)', margin: 0, fontSize: 24, fontWeight: 400, fontFamily: 'var(--font-headline)' }}>Loading Pool Analytics...</h2>
+              <p style={{ color: 'var(--euler-text-secondary)', marginTop: 8, fontSize: 16, fontFamily: 'var(--font-body)' }}>Please wait a moment</p>
               <div style={{ 
                 marginTop: 16,
                 padding: '8px 16px',
-                background: '#f1f5f9',
+                background: 'var(--euler-dark-bg)',
                 borderRadius: 8,
                 fontSize: 14,
-                color: '#6b7280'
+                color: 'var(--euler-text-secondary)',
+                border: '1px solid var(--euler-dark-border)'
               }}>
                 💡 Initial loading may take some time
               </div>
             </div>
           ) : selectedPool && poolDetail ? (
-            <div style={{ background: '#fff', borderRadius: 16, padding: 32, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+            <div style={{ background: 'var(--euler-dark-surface)', borderRadius: 16, padding: 32, boxShadow: '0 8px 32px rgba(0,0,0,0.3)', border: '1px solid var(--euler-dark-border)' }}>
               <PoolInfoHeader 
                 poolAddress={selectedPool}
                 asset0Info={asset0Info}
@@ -878,15 +883,16 @@ function App() {
             </div>
           ) : (
             <div style={{ 
-              background: '#fff', 
+              background: 'var(--euler-dark-surface)', 
               borderRadius: 16, 
               padding: 64, 
               textAlign: 'center',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
+              boxShadow: '0 4px 6px rgba(0,0,0,0.2)',
+              border: '1px solid var(--euler-dark-border)'
             }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
-              <h2 style={{ color: '#6b7280', margin: 0, fontSize: 24 }}>Select a Pool to View Analytics</h2>
-              <p style={{ color: '#9ca3af', marginTop: 8 }}>Choose a pool from the side menu to see detailed analytics and metrics</p>
+              <h2 style={{ color: 'var(--euler-text-primary)', margin: 0, fontSize: 24, fontWeight: 400, fontFamily: 'var(--font-headline)' }}>Select a Pool to View Analytics</h2>
+              <p style={{ color: 'var(--euler-text-secondary)', marginTop: 8, fontFamily: 'var(--font-body)' }}>Choose a pool from the side menu to see detailed analytics and metrics</p>
             </div>
           )}
         </div>
