@@ -43,5 +43,14 @@ export const TOKEN_LIST: Record<string, TokenInfo[]> = {
     { symbol: 'DAI', address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', decimals: 18, name: 'Dai Stablecoin' },
     { symbol: 'WETH', address: '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', decimals: 18, name: 'Wrapped Ether' },
   ],
+  unichain: [
+    { "symbol": "ETH", "address": "0x0000000000000000000000000000000000000000", "decimals": 18, "name": "Ether" },
+    { "symbol": "WETH", "address": "0x4200000000000000000000000000000000000006", "decimals": 18, "name": "Wrapped Ether" },
+    { "symbol": "USDC", "address": "0x078D782b760474a361dDA0AF3839290b0EF57AD6", "decimals": 6, "name": "USD Coin" },
+    { "symbol": "USDT", "address": "0x9151434b16b9763660705744891fA906F660EcC5", "decimals": 6, "name": "Tether USD" },
+    { "symbol": "DAI", "address": "0x20cab320a855b39f724131c69424240519573f81", "decimals": 18, "name": "Dai Stablecoin" },
+    { "symbol": "WBTC", "address": "0x927B51f251480a681271180DA4de28D44EC4AfB8", "decimals": 8, "name": "Wrapped BTC" },
+    { "symbol": "UNI", "address": "0x8f187aA05619a017077f5308904739877ce9eA21", "decimals": 18, "name": "Uniswap" },
+  ],
   // Add more networks/tokens as needed
 };

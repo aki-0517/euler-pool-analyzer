@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import './App.css';
 import { createPublicClient, http } from 'viem';
 import { TOKEN_LIST } from './assets/tokenlist';
@@ -234,6 +234,9 @@ function App() {
 
   // Enhanced state for comprehensive pool data
   const [vaultData, setVaultData] = useState<VaultData | null>(null);
+  
+  // Cache for basic pool data (for filtering)
+  const [poolAssetsCache, setPoolAssetsCache] = useState<Record<string, {asset0: string, asset1: string}>>({});
 
   useEffect(() => {
     if (!swapHistoryWithTimestamp.length || !poolDetail) {
@@ -291,6 +294,51 @@ function App() {
     setCumulativeMetrics(cumulative);
   }, [swapHistoryWithTimestamp, poolDetail]);
 
+  // Function to fetch basic pool assets for filtering
+  const fetchPoolAssetsForFiltering = useCallback(async (poolAddress: string) => {
+    if (poolAssetsCache[poolAddress]) return poolAssetsCache[poolAddress];
+    
+    try {
+      const assets = await client.readContract({
+        address: poolAddress as `0x${string}`,
+        abi: POOL_ABI,
+        functionName: 'getAssets',
+      }) as [string, string];
+      
+      const assetData = { asset0: assets[0], asset1: assets[1] };
+      setPoolAssetsCache(prev => ({ ...prev, [poolAddress]: assetData }));
+      return assetData;
+    } catch (error) {
+      console.warn(`Failed to fetch assets for pool ${poolAddress}:`, error);
+      return null;
+    }
+  }, [client, poolAssetsCache]);
+
+  // Prefetch pool assets when user starts searching by token names
+  useEffect(() => {
+    if (!poolSearchFilter || poolSearchFilter.length < 2) return;
+    
+    const searchTerm = poolSearchFilter.toLowerCase();
+    
+    // Check if the search term might be a token name/symbol
+    const hasTokenMatch = tokenList.some(token => 
+      token.symbol.toLowerCase().includes(searchTerm) || 
+      token.name.toLowerCase().includes(searchTerm)
+    );
+    
+    if (hasTokenMatch) {
+      // Fetch assets for pools that don't have cached data
+      const uncachedPools = poolAddresses.filter(addr => !poolAssetsCache[addr]);
+      
+      // Limit to first 50 pools to avoid overwhelming the RPC
+      const poolsToFetch = uncachedPools.slice(0, 50);
+      
+      poolsToFetch.forEach(poolAddress => {
+        fetchPoolAssetsForFiltering(poolAddress);
+      });
+    }
+  }, [poolSearchFilter, tokenList, poolAddresses, poolAssetsCache, fetchPoolAssetsForFiltering]);
+
   // Update client, factory, tokenList on network change
   useEffect(() => {
     setFactoryAddress(network.factory as `0x${string}`);
@@ -299,6 +347,7 @@ function App() {
     setSelectedPool(null);
     setPoolAddresses([]);
     setPoolCount(null);
+    setPoolAssetsCache({}); // Clear pool assets cache on network change
     setLoading(true);
   }, [networkKey, network]);
 
@@ -622,11 +671,43 @@ function App() {
     );
   }
 
-  // Filtered pools based on search
-  const filteredPools = poolAddresses.filter(pool => {
-    if (!poolSearchFilter) return true;
-    return pool.toLowerCase().includes(poolSearchFilter.toLowerCase());
-  });
+  // Enhanced pool filtering with token name support
+  const filteredPools = useMemo(() => {
+    if (!poolSearchFilter) return poolAddresses;
+    
+    const searchTerm = poolSearchFilter.toLowerCase();
+    
+    return poolAddresses.filter(poolAddress => {
+      // Filter by pool address
+      if (poolAddress.toLowerCase().includes(searchTerm)) {
+        return true;
+      }
+      
+      // Filter by token names - check if pool data exists in cache
+      const cachedAssets = poolAssetsCache[poolAddress];
+      if (cachedAssets) {
+        const token0 = tokenList.find(t => t.address.toLowerCase() === cachedAssets.asset0?.toLowerCase());
+        const token1 = tokenList.find(t => t.address.toLowerCase() === cachedAssets.asset1?.toLowerCase());
+        
+        // Check token symbols and names
+        if (token0 && (
+          token0.symbol.toLowerCase().includes(searchTerm) || 
+          token0.name.toLowerCase().includes(searchTerm)
+        )) {
+          return true;
+        }
+        
+        if (token1 && (
+          token1.symbol.toLowerCase().includes(searchTerm) || 
+          token1.name.toLowerCase().includes(searchTerm)
+        )) {
+          return true;
+        }
+      }
+      
+      return false;
+    });
+  }, [poolAddresses, poolSearchFilter, poolAssetsCache, tokenList]);
 
   return (
     <>
@@ -691,7 +772,7 @@ function App() {
                 </label>
                 <input
                   type="text"
-                  placeholder="Search by address..."
+                  placeholder="Search by address or token name..."
                   value={poolSearchFilter}
                   onChange={(e) => setPoolSearchFilter(e.target.value)}
                   style={{
